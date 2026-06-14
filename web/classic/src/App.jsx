@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { lazy, Suspense, useContext, useMemo } from 'react';
-import { Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Loading from './components/common/ui/Loading';
 import User from './pages/User';
 import { AuthRedirect, PrivateRoute, AdminRoute } from './helpers';
@@ -107,6 +107,16 @@ function App() {
           }
         />
         <Route path='/forbidden' element={<Forbidden />} />
+        <Route path='/dashboard' element={<Navigate to='/console' replace />} />
+        <Route path='/dashboard/*' element={<Navigate to='/console' replace />} />
+        <Route
+          path='/subscriptions'
+          element={<Navigate to='/console/subscription' replace />}
+        />
+        <Route
+          path='/subscriptions/*'
+          element={<Navigate to='/console/subscription' replace />}
+        />
         <Route
           path='/console/models'
           element={
