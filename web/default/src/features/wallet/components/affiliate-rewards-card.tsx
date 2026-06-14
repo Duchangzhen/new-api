@@ -16,11 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Share2 } from 'lucide-react'
+import { BarChart3, Gift, Sparkles, TrendingUp, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatQuota } from '@/lib/format'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CopyButton } from '@/components/copy-button'
@@ -42,16 +42,17 @@ export function AffiliateRewardsCard({
   loading,
 }: AffiliateRewardsCardProps) {
   const { t } = useTranslation()
+
   if (loading) {
     return (
-      <Card className='bg-muted/20 py-0'>
-        <CardContent className='grid gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(220px,1fr)_minmax(220px,0.72fr)_minmax(320px,1.15fr)] lg:items-center'>
-          <div>
-            <Skeleton className='h-5 w-32' />
-            <Skeleton className='mt-2 h-4 w-48' />
-          </div>
-          <Skeleton className='h-14 rounded-lg' />
-          <Skeleton className='h-10 rounded-lg' />
+      <Card className='gap-0 overflow-hidden py-0'>
+        <CardHeader className='p-3 !pb-3 sm:p-5 sm:!pb-5'>
+          <Skeleton className='h-6 w-32' />
+          <Skeleton className='mt-2 h-4 w-48' />
+        </CardHeader>
+        <CardContent className='space-y-3 p-3 sm:p-4'>
+          <Skeleton className='h-56 rounded-xl' />
+          <Skeleton className='h-32 rounded-xl' />
         </CardContent>
       </Card>
     )
@@ -60,68 +61,124 @@ export function AffiliateRewardsCard({
   const hasRewards = (user?.aff_quota ?? 0) > 0
 
   return (
-    <Card className='bg-muted/20 py-0'>
-      <CardContent className='grid gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[minmax(200px,1fr)_minmax(180px,0.65fr)_minmax(280px,1fr)] lg:items-center'>
-        <div className='flex min-w-0 items-center gap-2.5'>
-          <div className='bg-background flex size-8 shrink-0 items-center justify-center rounded-lg border'>
-            <Share2 className='text-muted-foreground size-4' />
+    <Card className='gap-0 overflow-hidden py-0'>
+      <CardHeader className='p-3 !pb-3 sm:p-5 sm:!pb-5'>
+        <div className='flex min-w-0 items-center gap-3'>
+          <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'>
+            <Gift className='h-4 w-4' />
           </div>
           <div className='min-w-0'>
-            <h3 className='truncate text-sm font-semibold'>
-              {t('Referral Program')}
+            <h3 className='truncate text-lg font-semibold tracking-tight'>
+              邀请奖励
             </h3>
-            <p className='text-muted-foreground line-clamp-1 text-xs'>
-              {t(
-                'Earn rewards when your referrals add funds. Transfer accumulated rewards to your balance anytime.'
-              )}
+            <p className='text-muted-foreground truncate text-sm'>
+              邀请好友获得额外奖励
             </p>
           </div>
         </div>
+      </CardHeader>
 
-        <div className='grid grid-cols-3 gap-1.5 text-center'>
-          {[
-            [t('Pending'), formatQuota(user?.aff_quota ?? 0)],
-            [t('Total Earned'), formatQuota(user?.aff_history_quota ?? 0)],
-            [t('Invites'), String(user?.aff_count ?? 0)],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <div className='text-muted-foreground truncate text-[10px] font-medium tracking-wider uppercase'>
-                {label}
+      <CardContent className='space-y-3 p-3 pt-0 sm:p-4 sm:pt-0'>
+        <div className='relative overflow-hidden rounded-xl bg-[#064f54] p-5 text-white sm:p-6'>
+          <div
+            className='pointer-events-none absolute inset-0 opacity-45'
+            style={{
+              background:
+                'radial-gradient(circle at 30% 20%, rgba(86, 196, 170, .45), transparent 36%), radial-gradient(circle at 70% 10%, rgba(37, 99, 235, .32), transparent 30%), linear-gradient(135deg, rgba(6, 95, 70, .85), rgba(15, 82, 93, .94))',
+            }}
+          />
+          <div className='pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 to-transparent' />
+          <div className='relative space-y-6'>
+            <div className='flex items-center justify-between gap-3'>
+              <h4 className='text-xl font-bold'>收益统计</h4>
+              {hasRewards && (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  onClick={onTransfer}
+                  disabled={!complianceConfirmed}
+                  className='h-9 rounded-xl bg-white/85 text-zinc-700 hover:bg-white'
+                >
+                  <Sparkles className='h-4 w-4' />
+                  划转到余额
+                </Button>
+              )}
+            </div>
+
+            <div className='grid grid-cols-3 gap-4 text-center'>
+              <div>
+                <div className='text-3xl font-bold tabular-nums'>
+                  {formatQuota(user?.aff_quota ?? 0)}
+                </div>
+                <div className='mt-3 inline-flex items-center gap-1 text-sm text-white/85'>
+                  <TrendingUp className='h-4 w-4' />
+                  待使用收益
+                </div>
               </div>
-              <div className='mt-0.5 truncate text-sm font-semibold tabular-nums'>
-                {value}
+              <div>
+                <div className='text-3xl font-bold tabular-nums'>
+                  {formatQuota(user?.aff_history_quota ?? 0)}
+                </div>
+                <div className='mt-3 inline-flex items-center gap-1 text-sm text-white/85'>
+                  <BarChart3 className='h-4 w-4' />
+                  总收益
+                </div>
+              </div>
+              <div>
+                <div className='text-3xl font-bold tabular-nums'>
+                  {(user?.aff_count ?? 0).toLocaleString()}
+                </div>
+                <div className='mt-3 inline-flex items-center gap-1 text-sm text-white/85'>
+                  <Users className='h-4 w-4' />
+                  邀请人数
+                </div>
               </div>
             </div>
-          ))}
+
+            <div className='relative flex items-center gap-2 rounded-lg bg-white/95 p-2 text-zinc-900'>
+              <span className='shrink-0 pl-2 text-sm font-semibold'>
+                邀请链接
+              </span>
+              <Input
+                value={affiliateLink}
+                readOnly
+                className='h-9 min-w-0 border-0 bg-transparent px-0 font-mono text-sm shadow-none focus-visible:ring-0'
+              />
+              <CopyButton
+                value={affiliateLink}
+                variant='default'
+                size='sm'
+                className='h-10 rounded-lg bg-blue-600 px-4 text-white hover:bg-blue-700'
+                iconClassName='h-4 w-4'
+                tooltip={t('Copy referral link')}
+                aria-label={t('Copy referral link')}
+              >
+                复制
+              </CopyButton>
+            </div>
+          </div>
         </div>
 
-        <div className='flex items-center gap-2'>
-          <Input
-            value={affiliateLink}
-            readOnly
-            className='border-muted bg-background/70 h-9 min-w-0 flex-1 font-mono text-xs'
-          />
-          <CopyButton
-            value={affiliateLink}
-            variant='outline'
-            className='bg-background size-9 shrink-0'
-            iconClassName='size-4'
-            tooltip={t('Copy referral link')}
-            aria-label={t('Copy referral link')}
-          />
-          {hasRewards && (
-            <Button
-              onClick={onTransfer}
-              disabled={!complianceConfirmed}
-              className='h-9 shrink-0 px-3'
-              size='sm'
-            >
-              {t('Transfer to Balance')}
-            </Button>
-          )}
+        <div className='rounded-xl border'>
+          <div className='border-b px-4 py-3 text-sm text-zinc-600 dark:text-zinc-300'>
+            奖励说明
+          </div>
+          <div className='space-y-3 p-4 text-sm text-muted-foreground'>
+            {[
+              '邀请好友注册，好友充值后您可获得相应奖励',
+              '通过划转功能将奖励额度转入到您的账户余额中',
+              '邀请的好友越多，获得的奖励越多',
+            ].map((item) => (
+              <div key={item} className='flex gap-3'>
+                <span className='mt-1.5 size-2 shrink-0 rounded-full bg-green-500' />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
+
         {!complianceConfirmed ? (
-          <p className='text-muted-foreground text-xs lg:col-span-3'>
+          <p className='text-muted-foreground text-xs'>
             {t(
               'Referral reward transfer is disabled until the administrator confirms compliance terms.'
             )}
