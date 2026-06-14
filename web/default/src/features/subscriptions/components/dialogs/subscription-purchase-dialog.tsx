@@ -66,6 +66,22 @@ interface Props {
   onPurchaseSuccess?: () => void | Promise<void>
 }
 
+function getCurrencySymbol(currency?: string): string {
+  const normalized = (currency || '').toUpperCase()
+  if (normalized === 'CNY' || normalized === 'RMB') return '¥'
+  if (normalized === 'EUR') return '€'
+  if (normalized === 'GBP') return '£'
+  return '$'
+}
+
+function formatPlanPrice(amount: number, currency?: string): string {
+  const formatted = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+  return `${getCurrencySymbol(currency)}${formatted}`
+}
+
 export function SubscriptionPurchaseDialog(props: Props) {
   const { t } = useTranslation()
   const { currency } = useSystemConfig()
@@ -96,7 +112,8 @@ export function SubscriptionPurchaseDialog(props: Props) {
     selectedEpayMethod ||
     t('Select payment method')
   const totalAmount = Number(plan.total_amount || 0)
-  const price = Number(plan.price_amount || 0).toFixed(2)
+  const priceAmount = Number(plan.price_amount || 0)
+  const price = formatPlanPrice(priceAmount, plan.currency)
   const quotaPerUnit =
     currency?.quotaPerUnit && currency.quotaPerUnit > 0
       ? currency.quotaPerUnit
@@ -260,28 +277,24 @@ export function SubscriptionPurchaseDialog(props: Props) {
       title={
         <>
           <Crown className='h-5 w-5' />
-          {t('Purchase Subscription')}
+          购买订阅套餐
         </>
       }
-      contentClassName='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-md'
+      contentClassName='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-xl'
       titleClassName='flex items-center gap-2'
       contentHeight='auto'
       bodyClassName='space-y-4'
     >
       <div className='space-y-3 sm:space-y-4'>
-        <div className='bg-muted/50 space-y-2.5 rounded-lg border p-3 sm:space-y-3 sm:p-4'>
+        <div className='space-y-4 rounded-lg p-1 sm:p-3'>
           <div className='flex justify-between'>
-            <span className='text-muted-foreground text-sm'>
-              {t('Plan Name')}
-            </span>
+            <span className='text-sm font-semibold'>套餐名称:</span>
             <span className='max-w-[200px] truncate text-sm font-medium'>
               {plan.title}
             </span>
           </div>
           <div className='flex items-center justify-between'>
-            <span className='text-muted-foreground text-sm'>
-              {t('Validity Period')}
-            </span>
+            <span className='text-sm font-semibold'>有效期:</span>
             <span className='flex items-center gap-1 text-sm'>
               <CalendarClock className='h-3.5 w-3.5' />
               {formatDuration(plan, t)}
@@ -296,9 +309,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
             </div>
           )}
           <div className='flex items-center justify-between'>
-            <span className='text-muted-foreground text-sm'>
-              {t('Received amount')}
-            </span>
+            <span className='text-sm font-semibold'>总额度:</span>
             <span className='flex items-center gap-1 text-sm'>
               <Package className='h-3.5 w-3.5' />
               {totalAmount > 0 ? formatQuota(totalAmount) : t('Unlimited')}
@@ -314,8 +325,8 @@ export function SubscriptionPurchaseDialog(props: Props) {
           )}
           <Separator />
           <div className='flex items-center justify-between'>
-            <span className='text-sm font-medium'>{t('Amount Due')}</span>
-            <span className='text-primary text-lg font-bold'>${price}</span>
+            <span className='text-sm font-semibold'>应付金额:</span>
+            <span className='text-lg font-bold'>{price}</span>
           </div>
         </div>
 
@@ -363,9 +374,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
 
         {hasAnyPayment && (
           <div className='space-y-3'>
-            <p className='text-muted-foreground text-xs'>
-              {t('Select payment method')}
-            </p>
+            <p className='text-muted-foreground text-xs'>选择支付方式:</p>
             {(hasStripe || hasCreem || hasWaffoPancake) && (
               <div className='grid grid-cols-2 gap-2 sm:flex'>
                 {hasStripe && (
@@ -429,8 +438,9 @@ export function SubscriptionPurchaseDialog(props: Props) {
                 <Button
                   onClick={handlePayEpay}
                   disabled={paying || !selectedEpayMethod || limitReached}
+                  className='bg-blue-600 px-5 text-white hover:bg-blue-700'
                 >
-                  {t('Pay')}
+                  支付
                 </Button>
               </div>
             )}
