@@ -78,6 +78,7 @@ interface RechargeFormCardProps {
   waffoMinTopup?: number
   onWaffoMethodSelect?: (method: WaffoPayMethod, index: number) => void
   enableWaffoPancakeTopup?: boolean
+  embedded?: boolean
 }
 
 export function RechargeFormCard({
@@ -108,6 +109,7 @@ export function RechargeFormCard({
   waffoMinTopup,
   onWaffoMethodSelect,
   enableWaffoPancakeTopup,
+  embedded = false,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
@@ -138,6 +140,23 @@ export function RechargeFormCard({
   const redemptionEnabled = topupInfo?.enable_redemption !== false
 
   if (loading) {
+    if (embedded) {
+      return (
+        <div className='space-y-4 sm:space-y-6'>
+          <div className='space-y-3'>
+            <Skeleton className='h-3 w-16' />
+            <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className='h-[72px] rounded-lg' />
+              ))}
+            </div>
+          </div>
+          <Skeleton className='h-[42px] w-full' />
+          <Skeleton className='h-10 rounded-lg' />
+        </div>
+      )
+    }
+
     return (
       <Card className='gap-0 overflow-hidden py-0'>
         <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
@@ -186,26 +205,8 @@ export function RechargeFormCard({
     )
   }
 
-  return (
-    <TitledCard
-      title={t('Add Funds')}
-      description={t('Choose an amount and payment method')}
-      icon={<WalletCards className='h-4 w-4' />}
-      action={
-        onOpenBilling ? (
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onOpenBilling}
-            className='w-full gap-2 sm:w-auto'
-          >
-            <Receipt className='h-4 w-4' />
-            {t('Order History')}
-          </Button>
-        ) : null
-      }
-      contentClassName='space-y-4 sm:space-y-6'
-    >
+  const content = (
+    <>
       {/* Online Topup Section */}
       {hasAnyTopup ? (
         <div className='space-y-4 sm:space-y-6'>
@@ -499,6 +500,34 @@ export function RechargeFormCard({
           </AlertDescription>
         </Alert>
       )}
+    </>
+  )
+
+  if (embedded) {
+    return <div className='space-y-4 sm:space-y-6'>{content}</div>
+  }
+
+  return (
+    <TitledCard
+      title={t('Add Funds')}
+      description={t('Choose an amount and payment method')}
+      icon={<WalletCards className='h-4 w-4' />}
+      action={
+        onOpenBilling ? (
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={onOpenBilling}
+            className='w-full gap-2 sm:w-auto'
+          >
+            <Receipt className='h-4 w-4' />
+            {t('Order History')}
+          </Button>
+        ) : null
+      }
+      contentClassName='space-y-4 sm:space-y-6'
+    >
+      {content}
     </TitledCard>
   )
 }
