@@ -72,6 +72,11 @@ const PageLayout = () => {
   const isConsoleRoute = location.pathname.startsWith('/console');
   const showSider = isConsoleRoute && (!isMobile || drawerOpen);
   const isFixedLayout = isConsoleRoute || location.pathname === '/pricing';
+  const shouldContentScroll =
+    isConsoleRoute &&
+    !isMobile &&
+    !location.pathname.startsWith('/console/chat') &&
+    location.pathname !== '/console/playground';
 
   useEffect(() => {
     if (isMobile && drawerOpen && collapsed) {
@@ -214,8 +219,13 @@ const PageLayout = () => {
           <Content
             className={isFixedLayout ? undefined : 'public-page-content'}
             style={{
-              flex: isFixedLayout ? '1 0 auto' : '1 1 auto',
-              overflowY: isFixedLayout && !isMobile ? 'hidden' : 'visible',
+              flex: '1 1 auto',
+              overflowX: 'hidden',
+              overflowY: shouldContentScroll
+                ? 'auto'
+                : isFixedLayout && !isMobile
+                  ? 'hidden'
+                  : 'visible',
               WebkitOverflowScrolling: 'touch',
               padding: shouldInnerPadding ? (isMobile ? '5px' : '24px') : '0',
               position: 'relative',
