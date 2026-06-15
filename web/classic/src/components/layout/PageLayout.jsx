@@ -41,6 +41,34 @@ import { useLocation } from 'react-router-dom';
 import { normalizeLanguage } from '../../i18n/language';
 const { Sider, Content, Header } = Layout;
 
+function applyBrowserBranding(systemName = getSystemName(), logo = getLogo()) {
+  if (systemName) {
+    document.title = systemName;
+  }
+
+  if (!logo) {
+    return;
+  }
+
+  const iconSelectors = [
+    "link[rel='icon']",
+    "link[rel='shortcut icon']",
+    "link[rel='apple-touch-icon']",
+  ];
+  let iconLinks = document.querySelectorAll(iconSelectors.join(','));
+
+  if (iconLinks.length === 0) {
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'icon';
+    document.head.appendChild(linkElement);
+    iconLinks = [linkElement];
+  }
+
+  iconLinks.forEach((linkElement) => {
+    linkElement.href = logo;
+  });
+}
+
 const PageLayout = () => {
   const [userState, userDispatch] = useContext(UserContext);
   const [, statusDispatch] = useContext(StatusContext);
@@ -99,6 +127,7 @@ const PageLayout = () => {
       if (success) {
         statusDispatch({ type: 'set', payload: data });
         setStatusData(data);
+        applyBrowserBranding(data.system_name, data.logo);
       } else {
         showError('Unable to connect to server');
       }
@@ -110,17 +139,7 @@ const PageLayout = () => {
   useEffect(() => {
     loadUser();
     loadStatus().catch(console.error);
-    let systemName = getSystemName();
-    if (systemName) {
-      document.title = systemName;
-    }
-    let logo = getLogo();
-    if (logo) {
-      let linkElement = document.querySelector("link[rel~='icon']");
-      if (linkElement) {
-        linkElement.href = logo;
-      }
-    }
+    applyBrowserBranding();
   }, []);
 
   useEffect(() => {
@@ -149,6 +168,17 @@ const PageLayout = () => {
       }
     }
   }, [i18n, userState?.user?.setting]);
+
+  const footerNode = !shouldHideFooter ? (
+    <Layout.Footer
+      style={{
+        flex: '0 0 auto',
+        width: '100%',
+      }}
+    >
+      <FooterBar />
+    </Layout.Footer>
+  ) : null;
 
   return (
     <Layout
@@ -235,17 +265,9 @@ const PageLayout = () => {
             <ErrorBoundary>
               <App />
             </ErrorBoundary>
+            {shouldContentScroll && footerNode}
           </Content>
-          {!shouldHideFooter && (
-            <Layout.Footer
-              style={{
-                flex: '0 0 auto',
-                width: '100%',
-              }}
-            >
-              <FooterBar />
-            </Layout.Footer>
-          )}
+          {!shouldContentScroll && footerNode}
         </Layout>
       </Layout>
       <ToastContainer />
