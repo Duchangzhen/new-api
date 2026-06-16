@@ -19,17 +19,20 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React, { useEffect, useState, useMemo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Typography } from '@douyinfe/semi-ui';
 import { getFooterHTML, getLogo, getSystemName } from '../../helpers';
 import { StatusContext } from '../../context/Status';
 
 const FooterBar = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const [footer, setFooter] = useState(getFooterHTML());
   const systemName = getSystemName();
   const logo = getLogo();
   const [statusState] = useContext(StatusContext);
   const isDemoSiteMode = statusState?.status?.demo_site_enabled || false;
+  const shouldHideFooter = location.pathname === '/console/playground';
 
   const loadFooter = () => {
     let footer_html = localStorage.getItem('footer_html');
@@ -217,6 +220,10 @@ const FooterBar = () => {
   useEffect(() => {
     loadFooter();
   }, []);
+
+  if (shouldHideFooter) {
+    return null;
+  }
 
   return (
     <div className='w-full'>
