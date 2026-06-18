@@ -98,22 +98,7 @@ func UpdateSubscriptionPreference(c *gin.Context) {
 }
 
 func SubscriptionRequestBalancePay(c *gin.Context) {
-	if !requirePaymentCompliance(c) {
-		return
-	}
-
-	userId := c.GetInt("id")
-	var req SubscriptionBalancePayRequest
-	if err := c.ShouldBindJSON(&req); err != nil || req.PlanId <= 0 {
-		common.ApiErrorMsg(c, "参数错误")
-		return
-	}
-
-	if err := model.PurchaseSubscriptionWithBalance(userId, req.PlanId); err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	common.ApiSuccess(c, nil)
+	common.ApiErrorMsg(c, "管理员未开启支付")
 }
 
 // ---- Admin APIs ----
@@ -166,7 +151,7 @@ func AdminCreateSubscriptionPlan(c *gin.Context) {
 	}
 	req.Plan.Currency = "USD"
 	if req.Plan.AllowBalancePay == nil {
-		req.Plan.AllowBalancePay = common.GetPointer(true)
+		req.Plan.AllowBalancePay = common.GetPointer(false)
 	}
 	if req.Plan.DurationUnit == "" {
 		req.Plan.DurationUnit = model.SubscriptionDurationMonth
