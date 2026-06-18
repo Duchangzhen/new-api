@@ -12,11 +12,3 @@ func ShouldChatCompletionsUseResponsesPolicy(policy model_setting.ChatCompletion
 func ShouldChatCompletionsUseResponsesGlobal(channelID int, channelType int, model string) bool {
 	return openaicompat.ShouldChatCompletionsUseResponsesGlobal(channelID, channelType, model)
 }
-
-func ShouldForceChatCompletionsUseResponses(model string) bool {
-	return openaicompat.ShouldForceChatCompletionsUseResponses(model)
-}
-
-func IsGPT55Model(model string) bool {
-	return openaicompat.IsGPT55Model(model)
-}
