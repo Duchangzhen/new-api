@@ -83,6 +83,7 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 	if lo.FromPtrOr(req.N, 1) > 1 {
 		return nil, fmt.Errorf("n>1 is not supported in responses compatibility mode")
 	}
+	strictCodexPayload := IsGPT55Model(req.Model)
 
 	var instructionsParts []string
 	inputItems := make([]map[string]any, 0, len(req.Messages))
@@ -155,9 +156,25 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 		item := map[string]any{
 			"role": role,
 		}
+		if strictCodexPayload {
+			item["type"] = "message"
+		}
 
 		if msg.Content == nil {
-			item["content"] = ""
+			if strictCodexPayload {
+				textType := "input_text"
+				if role == "assistant" {
+					textType = "output_text"
+				}
+				item["content"] = []map[string]any{
+					{
+						"type": textType,
+						"text": "",
+					},
+				}
+			} else {
+				item["content"] = ""
+			}
 			inputItems = append(inputItems, item)
 
 			if role == "assistant" {
@@ -184,7 +201,20 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 		}
 
 		if msg.IsStringContent() {
-			item["content"] = msg.StringContent()
+			if strictCodexPayload {
+				textType := "input_text"
+				if role == "assistant" {
+					textType = "output_text"
+				}
+				item["content"] = []map[string]any{
+					{
+						"type": textType,
+						"text": msg.StringContent(),
+					},
+				}
+			} else {
+				item["content"] = msg.StringContent()
+			}
 			inputItems = append(inputItems, item)
 
 			if role == "assistant" {
@@ -283,6 +313,8 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 	if len(instructionsParts) > 0 {
 		instructions := strings.Join(instructionsParts, "\n\n")
 		instructionsRaw, _ = common.Marshal(instructions)
+	} else if strictCodexPayload {
+		instructionsRaw = json.RawMessage(`""`)
 	}
 
 	var toolsRaw json.RawMessage
@@ -387,7 +419,11 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 		Store:             req.Store,
 		Metadata:          req.Metadata,
 	}
-	if req.MaxTokens != nil || req.MaxCompletionTokens != nil {
+	if strictCodexPayload {
+		out.Store = json.RawMessage("false")
+		out.Temperature = nil
+	}
+	if !strictCodexPayload && (req.MaxTokens != nil || req.MaxCompletionTokens != nil) {
 		out.MaxOutputTokens = lo.ToPtr(maxOutputTokens)
 	}
 
