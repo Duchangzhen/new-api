@@ -179,25 +179,6 @@ func (a *Adaptor) SetupRequestHeader(c *gin.Context, header *http.Header, info *
 		header.Set("api-key", info.ApiKey)
 		return nil
 	}
-	if info.RelayMode == relayconstant.RelayModeResponses &&
-		(service.IsGPT55Model(info.OriginModelName) || service.IsGPT55Model(info.UpstreamModelName)) {
-		header.Set("Content-Type", "application/json")
-		header.Set("OpenAI-Beta", "responses=experimental")
-		header.Set("originator", "codex_cli_rs")
-		header.Set("User-Agent", "codex_cli_rs")
-		if header.Get("session_id") == "" {
-			sessionModel := strings.TrimSpace(info.OriginModelName)
-			if sessionModel == "" {
-				sessionModel = strings.TrimSpace(info.UpstreamModelName)
-			}
-			header.Set("session_id", "new-api:"+sessionModel)
-		}
-		if info.IsStream {
-			header.Set("Accept", "text/event-stream")
-		} else {
-			header.Set("Accept", "application/json")
-		}
-	}
 	if info.ChannelType == constant.ChannelTypeOpenAI && "" != info.Organization {
 		header.Set("OpenAI-Organization", info.Organization)
 	}

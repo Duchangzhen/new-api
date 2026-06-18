@@ -721,12 +721,11 @@ func detectErrorMessageFromJSONBytes(jsonBytes []byte) string {
 
 func buildResponsesTestRequest(model string, isStream bool) *dto.OpenAIResponsesRequest {
 	req := &dto.OpenAIResponsesRequest{
-		Model:          model,
-		Input:          json.RawMessage(`[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]`),
-		Instructions:   json.RawMessage(`""`),
-		Store:          json.RawMessage("false"),
-		PromptCacheKey: json.RawMessage(`"new-api-channel-test"`),
-		Stream:         lo.ToPtr(isStream),
+		Model:        model,
+		Input:        json.RawMessage(`[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]`),
+		Instructions: json.RawMessage(`""`),
+		Store:        json.RawMessage("false"),
+		Stream:       lo.ToPtr(isStream),
 	}
 	if isStream {
 		req.StreamOptions = &dto.StreamOptions{IncludeUsage: true}
