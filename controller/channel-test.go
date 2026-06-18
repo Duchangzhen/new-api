@@ -719,6 +719,20 @@ func detectErrorMessageFromJSONBytes(jsonBytes []byte) string {
 	return message
 }
 
+func buildResponsesTestRequest(model string, isStream bool) *dto.OpenAIResponsesRequest {
+	req := &dto.OpenAIResponsesRequest{
+		Model:        model,
+		Input:        json.RawMessage(`[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]`),
+		Instructions: json.RawMessage(`""`),
+		Store:        json.RawMessage("false"),
+		Stream:       lo.ToPtr(isStream),
+	}
+	if isStream {
+		req.StreamOptions = &dto.StreamOptions{IncludeUsage: true}
+	}
+	return req
+}
+
 func buildTestRequest(model string, endpointType string, channel *model.Channel, isStream bool) dto.Request {
 	testResponsesInput := json.RawMessage(`[{"role":"user","content":"hi"}]`)
 
@@ -749,11 +763,7 @@ func buildTestRequest(model string, endpointType string, channel *model.Channel,
 			}
 		case constant.EndpointTypeOpenAIResponse:
 			// 返回 OpenAIResponsesRequest
-			return &dto.OpenAIResponsesRequest{
-				Model:  model,
-				Input:  json.RawMessage(`[{"role":"user","content":"hi"}]`),
-				Stream: lo.ToPtr(isStream),
-			}
+			return buildResponsesTestRequest(model, isStream)
 		case constant.EndpointTypeOpenAIResponseCompact:
 			// 返回 OpenAIResponsesCompactionRequest
 			return &dto.OpenAIResponsesCompactionRequest{
@@ -815,11 +825,7 @@ func buildTestRequest(model string, endpointType string, channel *model.Channel,
 
 	// Responses-only models (e.g. codex series)
 	if strings.Contains(strings.ToLower(model), "codex") {
-		return &dto.OpenAIResponsesRequest{
-			Model:  model,
-			Input:  json.RawMessage(`[{"role":"user","content":"hi"}]`),
-			Stream: lo.ToPtr(isStream),
-		}
+		return buildResponsesTestRequest(model, isStream)
 	}
 
 	// Chat/Completion 请求 - 返回 GeneralOpenAIRequest
