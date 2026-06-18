@@ -57,6 +57,15 @@ func normalizeChannelTestEndpoint(channel *model.Channel, modelName, endpointTyp
 	return normalized
 }
 
+func shouldUseStreamForChannelTest(modelName string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(modelName))
+	return normalized == "gpt-5.5" ||
+		strings.HasPrefix(normalized, "gpt-5.5-") ||
+		strings.HasPrefix(normalized, "gpt-5.5.") ||
+		strings.HasPrefix(normalized, "gpt-5.5/") ||
+		strings.HasPrefix(normalized, "gpt-5.5:")
+}
+
 func resolveChannelTestUserID(c *gin.Context) (int, error) {
 	if c != nil {
 		if userID := c.GetInt("id"); userID > 0 {
@@ -107,6 +116,9 @@ func testChannel(channel *model.Channel, testUserID int, testModel string, endpo
 				testModel = "gpt-4o-mini"
 			}
 		}
+	}
+	if !isStream && shouldUseStreamForChannelTest(testModel) {
+		isStream = true
 	}
 
 	endpointType = normalizeChannelTestEndpoint(channel, testModel, endpointType)
