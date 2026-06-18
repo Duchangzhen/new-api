@@ -48,6 +48,9 @@ func normalizeChannelTestEndpoint(channel *model.Channel, modelName, endpointTyp
 	if normalized != "" {
 		return normalized
 	}
+	if shouldUseResponsesEndpointForChannelTest(modelName) {
+		return string(constant.EndpointTypeOpenAIResponse)
+	}
 	if strings.HasSuffix(modelName, ratio_setting.CompactModelSuffix) {
 		return string(constant.EndpointTypeOpenAIResponseCompact)
 	}
@@ -57,13 +60,21 @@ func normalizeChannelTestEndpoint(channel *model.Channel, modelName, endpointTyp
 	return normalized
 }
 
-func shouldUseStreamForChannelTest(modelName string) bool {
+func isGPT55Model(modelName string) bool {
 	normalized := strings.ToLower(strings.TrimSpace(modelName))
 	return normalized == "gpt-5.5" ||
 		strings.HasPrefix(normalized, "gpt-5.5-") ||
 		strings.HasPrefix(normalized, "gpt-5.5.") ||
 		strings.HasPrefix(normalized, "gpt-5.5/") ||
 		strings.HasPrefix(normalized, "gpt-5.5:")
+}
+
+func shouldUseStreamForChannelTest(modelName string) bool {
+	return isGPT55Model(modelName)
+}
+
+func shouldUseResponsesEndpointForChannelTest(modelName string) bool {
+	return isGPT55Model(modelName)
 }
 
 func resolveChannelTestUserID(c *gin.Context) (int, error) {

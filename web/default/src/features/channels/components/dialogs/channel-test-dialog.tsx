@@ -69,6 +69,7 @@ import {
 import { StatusBadge } from '@/components/status-badge'
 import {
   formatResponseTime,
+  getChannelDefaultTestEndpoint,
   getChannelDefaultTestModel,
   handleTestChannel,
   shouldUseStreamForChannelTest,
@@ -233,8 +234,8 @@ export function ChannelTestDialog({
     [t]
   )
 
-  const resetState = useCallback((stream = false) => {
-    setEndpointType('auto')
+  const resetState = useCallback((stream = false, endpoint = 'auto') => {
+    setEndpointType(endpoint)
     setIsStreamTest(stream)
     setSearchTerm('')
     setTestResults({})
@@ -248,7 +249,10 @@ export function ChannelTestDialog({
   useEffect(() => {
     if (open && currentRow) {
       const initialTestModel = getChannelDefaultTestModel(currentRow)
-      resetState(shouldUseStreamForChannelTest(initialTestModel))
+      resetState(
+        shouldUseStreamForChannelTest(initialTestModel),
+        getChannelDefaultTestEndpoint(initialTestModel) || 'auto'
+      )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentRow?.id, resetState])
@@ -316,12 +320,15 @@ export function ChannelTestDialog({
       let finalResult: TestResult | undefined
 
       try {
+        const defaultEndpointType = getChannelDefaultTestEndpoint(model)
+        const shouldStreamModel = shouldUseStreamForChannelTest(model)
         await handleTestChannel(
           currentRow.id,
           {
             testModel: model,
-            endpointType: endpointType === 'auto' ? undefined : endpointType,
-            stream: isStreamTest || undefined,
+            endpointType:
+              endpointType === 'auto' ? defaultEndpointType : endpointType,
+            stream: isStreamTest || shouldStreamModel || undefined,
             silent,
           },
           (success, responseTime, error, errorCode) => {

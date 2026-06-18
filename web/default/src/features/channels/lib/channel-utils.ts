@@ -45,6 +45,10 @@ export function shouldUseStreamForChannelTest(model?: string): boolean {
   return /^gpt-5\.5(?:$|[-.:\s/])/.test((model || '').trim().toLowerCase())
 }
 
+export function getChannelDefaultTestEndpoint(model?: string): string | undefined {
+  return shouldUseStreamForChannelTest(model) ? 'openai-response' : undefined
+}
+
 // ============================================================================
 // Channel Type Utilities
 // ============================================================================

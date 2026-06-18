@@ -55,6 +55,7 @@ import { MODEL_FETCHABLE_TYPES } from '../constants'
 import {
   channelsQueryKeys,
   getChannelDefaultTestModel,
+  getChannelDefaultTestEndpoint,
   handleDeleteChannel,
   handleTestChannel,
   handleToggleChannelStatus,
@@ -98,9 +99,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     try {
       const testModel = getChannelDefaultTestModel(channel)
       const useStream = shouldUseStreamForChannelTest(testModel)
+      const endpointType = getChannelDefaultTestEndpoint(testModel)
       await handleTestChannel(
         channel.id,
-        useStream ? { testModel, stream: true } : undefined,
+        useStream || endpointType
+          ? { testModel, endpointType, stream: useStream }
+          : undefined,
         () => {
           queryClient.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
         }
