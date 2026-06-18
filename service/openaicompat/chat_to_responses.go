@@ -387,6 +387,11 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 		parallelToolCallsRaw, _ = common.Marshal(*req.ParallelTooCalls)
 	}
 
+	var promptCacheKeyRaw json.RawMessage
+	if strings.TrimSpace(req.PromptCacheKey) != "" {
+		promptCacheKeyRaw, _ = common.Marshal(strings.TrimSpace(req.PromptCacheKey))
+	}
+
 	textRaw := convertChatResponseFormatToResponsesText(req.ResponseFormat)
 
 	maxOutputTokens := lo.FromPtrOr(req.MaxTokens, uint(0))
@@ -417,10 +422,15 @@ func ChatCompletionsRequestToResponsesRequest(req *dto.GeneralOpenAIRequest) (*d
 		User:              req.User,
 		ParallelToolCalls: parallelToolCallsRaw,
 		Store:             req.Store,
-		Metadata:          req.Metadata,
+		PromptCacheKey:       promptCacheKeyRaw,
+		PromptCacheRetention: req.PromptCacheRetention,
+		Metadata:             req.Metadata,
 	}
 	if strictCodexPayload {
 		out.Store = json.RawMessage("false")
+		if len(out.PromptCacheKey) == 0 {
+			out.PromptCacheKey, _ = common.Marshal("new-api:" + strings.TrimSpace(req.Model))
+		}
 		out.Temperature = nil
 	}
 	if !strictCodexPayload && (req.MaxTokens != nil || req.MaxCompletionTokens != nil) {
