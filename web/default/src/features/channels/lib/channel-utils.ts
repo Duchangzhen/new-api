@@ -29,6 +29,22 @@ import {
 } from '../constants'
 import type { Channel, ChannelSettings, ChannelOtherSettings } from '../types'
 
+export function getChannelDefaultTestModel(channel?: Channel | null): string {
+  if (!channel) return ''
+  const testModel = channel.test_model?.trim()
+  if (testModel) return testModel
+  return (
+    channel.models
+      ?.split(',')
+      .map((model) => model.trim())
+      .find(Boolean) || ''
+  )
+}
+
+export function shouldUseStreamForChannelTest(model?: string): boolean {
+  return /^gpt-5\.5(?:$|[-.:\s/])/.test((model || '').trim().toLowerCase())
+}
+
 // ============================================================================
 // Channel Type Utilities
 // ============================================================================

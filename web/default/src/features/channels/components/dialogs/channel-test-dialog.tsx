@@ -67,7 +67,12 @@ import {
   sideDrawerHeaderClassName,
 } from '@/components/drawer-layout'
 import { StatusBadge } from '@/components/status-badge'
-import { formatResponseTime, handleTestChannel } from '../../lib'
+import {
+  formatResponseTime,
+  getChannelDefaultTestModel,
+  handleTestChannel,
+  shouldUseStreamForChannelTest,
+} from '../../lib'
 import { useChannels } from '../channels-provider'
 
 type ChannelTestDialogProps = {
@@ -228,9 +233,9 @@ export function ChannelTestDialog({
     [t]
   )
 
-  const resetState = useCallback(() => {
+  const resetState = useCallback((stream = false) => {
     setEndpointType('auto')
-    setIsStreamTest(false)
+    setIsStreamTest(stream)
     setSearchTerm('')
     setTestResults({})
     setRowSelection({})
@@ -242,7 +247,8 @@ export function ChannelTestDialog({
 
   useEffect(() => {
     if (open && currentRow) {
-      resetState()
+      const initialTestModel = getChannelDefaultTestModel(currentRow)
+      resetState(shouldUseStreamForChannelTest(initialTestModel))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentRow?.id, resetState])
