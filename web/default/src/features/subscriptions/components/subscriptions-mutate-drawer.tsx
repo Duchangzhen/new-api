@@ -454,14 +454,10 @@ export function SubscriptionsMutateDrawer({
                       </FormLabel>
                       <FormControl>
                         <Switch
-                          checked={false}
-                          onCheckedChange={() => field.onChange(false)}
-                          disabled
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormDescription>
-                        套餐购买不使用余额支付，请通过微信或支付宝充值账户余额。
-                      </FormDescription>
                     </FormItem>
                   )}
                 />
@@ -476,10 +472,14 @@ export function SubscriptionsMutateDrawer({
                       </FormLabel>
                       <FormControl>
                         <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                          checked={false}
+                          onCheckedChange={() => field.onChange(false)}
+                          disabled
                         />
                       </FormControl>
+                      <FormDescription>
+                        套餐购买已关闭账户余额扣款，请通过微信或支付宝充值账户余额。
+                      </FormDescription>
                     </FormItem>
                   )}
                 />

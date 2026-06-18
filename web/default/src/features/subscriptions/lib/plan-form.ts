@@ -83,7 +83,7 @@ export function planToFormValues(plan: SubscriptionPlan): PlanFormValues {
     quota_reset_custom_seconds: Number(plan.quota_reset_custom_seconds || 0),
     enabled: plan.enabled !== false,
     sort_order: Number(plan.sort_order || 0),
-    allow_balance_pay: plan.allow_balance_pay === true,
+    allow_balance_pay: false,
     max_purchase_per_user: Number(plan.max_purchase_per_user || 0),
     total_amount: quotaUnitsToDollars(Number(plan.total_amount || 0)),
     upgrade_group: plan.upgrade_group || '',
@@ -107,6 +107,7 @@ export function formValuesToPlanPayload(values: PlanFormValues): PlanPayload {
           ? Number(values.quota_reset_custom_seconds || 0)
           : 0,
       sort_order: Number(values.sort_order || 0),
+      allow_balance_pay: false,
       max_purchase_per_user: Number(values.max_purchase_per_user || 0),
       total_amount: parseQuotaFromDollars(Number(values.total_amount || 0)),
       upgrade_group: values.upgrade_group || '',
