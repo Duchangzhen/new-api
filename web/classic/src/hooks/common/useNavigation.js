@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import { useMemo } from 'react';
 
-export const useNavigation = (t, docsLink, headerNavModules) => {
+export const useNavigation = (t, _docsLink, headerNavModules) => {
   const mainNavLinks = useMemo(() => {
     const defaultModules = {
       home: true,
@@ -53,16 +53,11 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
         itemKey: 'monitoring',
         to: '/monitoring',
       },
-      ...(docsLink
-        ? [
-            {
-              text: t('文档'),
-              itemKey: 'docs',
-              isExternal: true,
-              externalLink: docsLink,
-            },
-          ]
-        : []),
+      {
+        text: t('文档'),
+        itemKey: 'docs',
+        to: '/docs',
+      },
       {
         text: t('关于'),
         itemKey: 'about',
@@ -72,7 +67,7 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
 
     return allLinks.filter((link) => {
       if (link.itemKey === 'docs') {
-        return docsLink && modules.docs;
+        return modules.docs === true;
       }
       if (link.itemKey === 'pricing') {
         return typeof modules.pricing === 'object'
@@ -81,7 +76,7 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
       }
       return modules[link.itemKey] === true;
     });
-  }, [t, docsLink, headerNavModules]);
+  }, [t, headerNavModules]);
 
   return {
     mainNavLinks,
