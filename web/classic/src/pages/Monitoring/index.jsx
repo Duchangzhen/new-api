@@ -64,8 +64,7 @@ function formatCardSecondaryMetric(group) {
     formatPriceLikeValue(group.price_text) ||
     formatPriceLikeValue(group.group_price_text) ||
     formatPriceLikeValue(group.price) ||
-    formatPriceLikeValue(group.group_price) ||
-    `${group.recent_requests || 0}次请求`
+    formatPriceLikeValue(group.group_price)
   );
 }
 
@@ -330,6 +329,7 @@ function HistoryChart({ history }) {
 
 function GroupCard({ group }) {
   const muted = group.state === 'idle' || group.state === 'unavailable';
+  const secondaryMetric = formatCardSecondaryMetric(group);
 
   return (
     <div
@@ -361,10 +361,14 @@ function GroupCard({ group }) {
         >
           {formatLatency(group.average_latency_ms)}
         </span>
-        <span className='text-[#d1d5db]'>|</span>
-        <span className='font-semibold tabular-nums text-[#6b7280]'>
-          {formatCardSecondaryMetric(group)}
-        </span>
+        {secondaryMetric ? (
+          <>
+            <span className='text-[#d1d5db]'>|</span>
+            <span className='font-semibold tabular-nums text-[#6b7280]'>
+              {secondaryMetric}
+            </span>
+          </>
+        ) : null}
       </div>
 
       <div className='mt-[14px] space-y-[11px]'>
