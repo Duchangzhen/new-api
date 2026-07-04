@@ -32,7 +32,7 @@ import { useActualTheme } from '../../context/Theme';
 import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
 import { IconCopy } from '@douyinfe/semi-icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import NoticeModal from '../../components/layout/NoticeModal';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { CLASSIC_PREVIEW_STATUS_FALLBACK } from '../../constants/previewStatus.constant';
@@ -126,6 +126,7 @@ const PROVIDER_ICONS = [
 
 const Home = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [statusState] = useContext(StatusContext);
   const actualTheme = useActualTheme();
   const [homePageContentLoaded, setHomePageContentLoaded] = useState(false);
@@ -386,6 +387,15 @@ const Home = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleOpenRoute = (url) => {
+    if (!url) return;
+    if (url.startsWith('/') && !url.startsWith('//')) {
+      navigate(url);
+      return;
+    }
+    handleOpenExternal(url);
+  };
+
   useEffect(() => {
     const checkNoticeAndShow = async () => {
       const lastCloseDate = localStorage.getItem('notice_close_date');
@@ -488,7 +498,7 @@ const Home = () => {
                       size={isMobile ? 'default' : 'large'}
                       className='classic-home-hero-btn classic-home-hero-btn-secondary'
                       icon={<BookOpen size={16} />}
-                      onClick={() => handleOpenExternal(docsLink)}
+                      onClick={() => handleOpenRoute(docsLink)}
                     >
                       {text.ctaDocs}
                     </Button>
@@ -555,7 +565,7 @@ const Home = () => {
                     size='small'
                     className='classic-home-route-open'
                     icon={<ExternalLink size={14} />}
-                    onClick={() => handleOpenExternal(route.url)}
+                    onClick={() => handleOpenRoute(route.url)}
                   >
                     {text.routeOpen}
                   </Button>
@@ -690,7 +700,7 @@ const Home = () => {
                   <Button
                     className='classic-home-plain-action'
                     icon={<BookOpen size={16} />}
-                    onClick={() => handleOpenExternal(docsLink)}
+                    onClick={() => handleOpenRoute(docsLink)}
                   >
                     {text.ctaDocs}
                   </Button>
