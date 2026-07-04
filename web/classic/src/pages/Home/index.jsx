@@ -76,6 +76,7 @@ const toSafeMarkedHtml = (value) => {
 };
 
 const removeTrailingSlash = (value) => toSafeString(value).replace(/\/+$/, '');
+const HOME_DOCS_PATH = '/docs';
 
 const getHostname = (value) => {
   const safeValue = toSafeString(value);
@@ -87,7 +88,9 @@ const getHostname = (value) => {
   try {
     return new URL(safeValue).hostname.replace(/^www\./i, '');
   } catch (error) {
-    return safeValue.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+    return (
+      safeValue.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') || safeValue
+    );
   }
 };
 
@@ -129,8 +132,7 @@ const Home = () => {
   const [homePageContent, setHomePageContent] = useState('');
   const [noticeVisible, setNoticeVisible] = useState(false);
   const isMobile = useIsMobile();
-  const docsLink =
-    statusState?.status?.docs_link || CLASSIC_PREVIEW_STATUS_FALLBACK.docs_link;
+  const docsLink = HOME_DOCS_PATH;
   const serverAddress =
     statusState?.status?.server_address ||
     CLASSIC_PREVIEW_STATUS_FALLBACK.server_address;
@@ -176,7 +178,9 @@ const Home = () => {
       routePrimary: isChinese ? '主线路' : 'Primary',
       routeOpenAI: isChinese ? 'OpenAI 兼容' : 'OpenAI compatible',
       routeDocs: isChinese ? '快速文档' : 'Quick docs',
-      appsTitle: isChinese ? '常用客户端与模型生态' : 'Clients and model ecosystem',
+      appsTitle: isChinese
+        ? '常用客户端与模型生态'
+        : 'Clients and model ecosystem',
       appsSubtitle: isChinese
         ? '保留熟悉的 OpenAI 接入方式，同时覆盖常见桌面客户端和主流模型供应商。'
         : 'Keep a familiar OpenAI-style integration path while supporting popular clients and model vendors.',
@@ -196,14 +200,18 @@ const Home = () => {
       fallbackFaq: [
         {
           id: 'faq-1',
-          question: isChinese ? '如何开始接入？' : 'How do I start integrating?',
+          question: isChinese
+            ? '如何开始接入？'
+            : 'How do I start integrating?',
           answer: isChinese
             ? '先复制首页展示的接入地址，再进入控制台创建密钥，最后把 Base URL 和 API Key 填进你使用的客户端。'
             : 'Copy the base URL, create a key in the console, then paste the Base URL and API key into your client.',
         },
         {
           id: 'faq-2',
-          question: isChinese ? '支持哪些客户端？' : 'Which clients are supported?',
+          question: isChinese
+            ? '支持哪些客户端？'
+            : 'Which clients are supported?',
           answer: isChinese
             ? '大多数 OpenAI 兼容客户端都可以直接接入，包括 Cherry Studio、CC Switch、LobeChat 等常见工具。'
             : 'Most OpenAI-compatible clients work directly here, including Cherry Studio, CC Switch, and LobeChat.',
@@ -263,7 +271,7 @@ const Home = () => {
       },
     ];
 
-      return fallbackRoutes.filter((item) => item.url);
+    return fallbackRoutes.filter((item) => item.url);
   }, [
     apiInfo,
     baseHost,
@@ -495,7 +503,6 @@ const Home = () => {
                     </Link>
                   )}
                 </div>
-
               </div>
             </div>
           </section>
@@ -506,12 +513,17 @@ const Home = () => {
                 <Network size={16} />
                 <span>{text.routesTitle}</span>
               </div>
-              <p className='classic-home-section-subtitle'>{text.routesSubtitle}</p>
+              <p className='classic-home-section-subtitle'>
+                {text.routesSubtitle}
+              </p>
             </div>
 
             <div className='mx-auto grid max-w-xl gap-4 md:grid-cols-1'>
               {displayRouteCards.map((route) => (
-                <div key={route.id} className='classic-home-panel classic-home-route-card'>
+                <div
+                  key={route.id}
+                  className='classic-home-panel classic-home-route-card'
+                >
                   <div className='flex items-center justify-between gap-3'>
                     <Tag
                       color={route.color || 'grey'}
@@ -559,12 +571,16 @@ const Home = () => {
                   <Sparkles size={16} />
                   <span>{text.appsTitle}</span>
                 </div>
-                <p className='classic-home-section-subtitle'>{text.appsSubtitle}</p>
+                <p className='classic-home-section-subtitle'>
+                  {text.appsSubtitle}
+                </p>
               </div>
 
               <div className='grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]'>
                 <div>
-                  <div className='classic-home-card-label'>{text.clientsLabel}</div>
+                  <div className='classic-home-card-label'>
+                    {text.clientsLabel}
+                  </div>
                   <div className='mt-4 flex flex-wrap gap-3'>
                     {appItems.map((app) => (
                       <button
@@ -584,7 +600,9 @@ const Home = () => {
                 </div>
 
                 <div>
-                  <div className='classic-home-card-label'>{text.providersLabel}</div>
+                  <div className='classic-home-card-label'>
+                    {text.providersLabel}
+                  </div>
                   <div className='mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4'>
                     {PROVIDER_ICONS.map((item) => (
                       <div key={item.id} className='classic-home-provider-card'>
@@ -616,7 +634,9 @@ const Home = () => {
                           {item.relative || item.time}
                         </div>
                         {item.time ? (
-                          <div className='classic-home-card-meta'>{item.time}</div>
+                          <div className='classic-home-card-meta'>
+                            {item.time}
+                          </div>
                         ) : null}
                       </div>
                       <div
@@ -640,7 +660,10 @@ const Home = () => {
               </div>
               <p className='classic-home-card-copy mt-3'>{text.faqSubtitle}</p>
 
-              <Collapse accordion className='classic-home-faq mt-5 overflow-hidden'>
+              <Collapse
+                accordion
+                className='classic-home-faq mt-5 overflow-hidden'
+              >
                 {faqItems.map((item, index) => (
                   <Collapse.Panel
                     key={item.id || index}
