@@ -42,7 +42,7 @@ export const CLASSIC_PREVIEW_STATUS_FALLBACK = {
   default_collapse_sidebar: false,
   mj_notify_enabled: false,
   HeaderNavModules:
-    '{"home":true,"console":true,"pricing":{"enabled":true,"requireAuth":true},"rankings":{"enabled":false,"requireAuth":false},"docs":true,"about":false}',
+    '{"home":true,"console":true,"pricing":{"enabled":true,"requireAuth":true},"monitoring":true,"rankings":{"enabled":false,"requireAuth":false},"docs":true,"about":false}',
   password_login_enabled: true,
   password_register_enabled: true,
   github_oauth: false,
