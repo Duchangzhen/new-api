@@ -33,22 +33,27 @@ import { StatusContext } from '../../../context/Status';
 
 const { Text } = Typography;
 
+const DEFAULT_HEADER_NAV_MODULES = {
+  home: true,
+  console: true,
+  pricing: {
+    enabled: true,
+    requireAuth: false,
+  },
+  monitoring: true,
+  docs: true,
+  about: true,
+};
+
 export default function SettingsHeaderNavModules(props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [statusState, statusDispatch] = useContext(StatusContext);
 
   // 顶栏模块管理状态
-  const [headerNavModules, setHeaderNavModules] = useState({
-    home: true,
-    console: true,
-    pricing: {
-      enabled: true,
-      requireAuth: false, // 默认不需要登录鉴权
-    },
-    docs: true,
-    about: true,
-  });
+  const [headerNavModules, setHeaderNavModules] = useState(
+    DEFAULT_HEADER_NAV_MODULES,
+  );
 
   // 处理顶栏模块配置变更
   function handleHeaderNavModuleChange(moduleKey) {
@@ -79,17 +84,7 @@ export default function SettingsHeaderNavModules(props) {
 
   // 重置顶栏模块为默认配置
   function resetHeaderNavModules() {
-    const defaultModules = {
-      home: true,
-      console: true,
-      pricing: {
-        enabled: true,
-        requireAuth: false,
-      },
-      docs: true,
-      about: true,
-    };
-    setHeaderNavModules(defaultModules);
+    setHeaderNavModules(DEFAULT_HEADER_NAV_MODULES);
     showSuccess(t('已重置为默认配置'));
   }
 
@@ -142,20 +137,16 @@ export default function SettingsHeaderNavModules(props) {
           };
         }
 
-        setHeaderNavModules(modules);
-      } catch (error) {
-        // 使用默认配置
-        const defaultModules = {
-          home: true,
-          console: true,
+        setHeaderNavModules({
+          ...DEFAULT_HEADER_NAV_MODULES,
+          ...modules,
           pricing: {
-            enabled: true,
-            requireAuth: false,
+            ...DEFAULT_HEADER_NAV_MODULES.pricing,
+            ...modules.pricing,
           },
-          docs: true,
-          about: true,
-        };
-        setHeaderNavModules(defaultModules);
+        });
+      } catch (error) {
+        setHeaderNavModules(DEFAULT_HEADER_NAV_MODULES);
       }
     }
   }, [props.options]);
@@ -177,6 +168,11 @@ export default function SettingsHeaderNavModules(props) {
       title: t('模型广场'),
       description: t('模型定价，需要登录访问'),
       hasSubConfig: true, // 标识该模块有子配置
+    },
+    {
+      key: 'monitoring',
+      title: t('分组监控'),
+      description: t('分组状态监控和可用性展示'),
     },
     {
       key: 'docs',

@@ -2118,6 +2118,7 @@
     "模型定价设置": "Model Pricing",
     "模型广场": "Model Marketplace",
     "分组监控": "Group Monitoring",
+    "分组状态监控和可用性展示": "Group status monitoring and availability display",
     "模型拉取失败: {{error}}": "Failed to pull model: {{error}}",
     "模型排行": "Model ranking",
     "模型支持的接口端点信息": "Model supported API endpoint information",
