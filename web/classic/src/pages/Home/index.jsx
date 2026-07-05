@@ -65,6 +65,18 @@ const formatCompactNumber = (value, digits = 6) => {
   return Number(number.toFixed(digits)).toString();
 };
 const formatRatioDisplay = (value) => formatCompactNumber(value) + 'x';
+const getGroupRateSortValue = (value) =>
+  value === null ? Number.POSITIVE_INFINITY : value;
+const compareGroupRateCards = (a, b) => {
+  const rateDiff =
+    getGroupRateSortValue(a.ratioValue) - getGroupRateSortValue(b.ratioValue);
+
+  if (rateDiff !== 0) {
+    return rateDiff;
+  }
+
+  return a.name.localeCompare(b.name);
+};
 const getModelGroups = (model) =>
   toSafeArray(model?.enable_groups).filter(Boolean);
 const HOME_RATE_CATEGORIES = [
@@ -378,6 +390,7 @@ const Home = () => {
           metaItems,
           tags: categoryLabels,
           categoryIds,
+          ratioValue,
         };
       })
       .filter((model) => {
@@ -387,7 +400,7 @@ const Home = () => {
 
         return model.categoryIds.includes(activeRateCategory);
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort(compareGroupRateCards);
   }, [
     activeRateCategory,
     isChinese,
