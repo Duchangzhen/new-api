@@ -60,7 +60,6 @@ export default function GeneralSettings(props) {
     'token_setting.max_user_tokens': 1000,
   });
   const refForm = useRef();
-  const topUpQrFileInputRef = useRef(null);
   const [inputsRow, setInputsRow] = useState(inputs);
 
   function handleFieldChange(fieldName) {
@@ -68,31 +67,6 @@ export default function GeneralSettings(props) {
       setInputs((inputs) => ({ ...inputs, [fieldName]: value }));
     };
   }
-
-  const handleTopUpQrUpload = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showError(t('请选择图片文件'));
-      return;
-    }
-    if (file.size > 512 * 1024) {
-      showError(t('图片不能超过 512KB，请压缩后重新上传'));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || '');
-      setInputs((inputs) => ({ ...inputs, TopUpLink: dataUrl }));
-      refForm.current?.setValue('TopUpLink', dataUrl);
-      showSuccess(t('收款码已填入，保存设置后生效'));
-    };
-    reader.onerror = () => showError(t('读取图片失败，请重试'));
-    reader.readAsDataURL(file);
-  };
 
   function onSubmit() {
     const updateArray = compareObjects(inputs, inputsRow);
@@ -280,29 +254,6 @@ export default function GeneralSettings(props) {
                   onChange={handleFieldChange('TopUpLink')}
                   showClear
                 />
-                <input
-                  ref={topUpQrFileInputRef}
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  onChange={handleTopUpQrUpload}
-                />
-                <div className='mt-2 flex flex-wrap items-center gap-3'>
-                  <Button
-                    type='tertiary'
-                    theme='outline'
-                    onClick={() => topUpQrFileInputRef.current?.click()}
-                  >
-                    {t('上传收款码图片')}
-                  </Button>
-                  {String(inputs.TopUpLink || '').startsWith('data:image/') ? (
-                    <img
-                      src={inputs.TopUpLink}
-                      alt={t('收款码预览')}
-                      className='h-14 w-14 rounded-lg border border-[var(--semi-color-border)] bg-white object-contain p-1'
-                    />
-                  ) : null}
-                </div>
               </Col>
               <Col xs={24} sm={12} md={8} lg={8} xl={8}>
                 <Form.Input
