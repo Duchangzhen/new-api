@@ -35,6 +35,7 @@ const CONFIG = {
   CAROUSEL_INTERVAL: 2000,
   ICON_SIZE: 40,
   UNKNOWN_VENDOR: 'unknown',
+  BYTEDANCE_VENDOR_LABEL: '\u5b57\u8282\u8df3\u52a8',
 };
 
 const THEME_COLORS = {
@@ -63,10 +64,10 @@ const COMPONENT_STYLES = {
 
 const CONTENT_TEXTS = {
   unknown: {
-    displayName: (t) => t('未知供应商'),
+    displayName: (t) => t(CONFIG.BYTEDANCE_VENDOR_LABEL),
     description: (t) =>
       t(
-        '包含来自未知或未标明供应商的AI模型，这些模型可能来自小型供应商或开源项目。',
+        '字节跳动相关模型，包含未标明供应商但实际归属字节跳动、豆包或火山引擎的模型。',
       ),
   },
   all: {
@@ -78,10 +79,17 @@ const CONTENT_TEXTS = {
   },
 };
 
+const VENDOR_DISPLAY_OVERRIDES = {
+  Anthropic: 'Claude',
+  Google: 'Gemini',
+};
+
 const getVendorDisplayName = (vendorName, t) => {
-  return vendorName === CONFIG.UNKNOWN_VENDOR
-    ? CONTENT_TEXTS.unknown.displayName(t)
-    : vendorName;
+  if (vendorName === CONFIG.UNKNOWN_VENDOR) {
+    return CONTENT_TEXTS.unknown.displayName(t);
+  }
+
+  return t(VENDOR_DISPLAY_OVERRIDES[vendorName] || vendorName);
 };
 
 const createDefaultAvatar = () => (
@@ -99,7 +107,7 @@ const getAvatarBackgroundColor = (isAllVendors) =>
 
 const getAvatarText = (vendorName) =>
   vendorName === CONFIG.UNKNOWN_VENDOR
-    ? '?'
+    ? '\u5b57'
     : vendorName.charAt(0).toUpperCase();
 
 const createAvatarContent = (vendor, isAllVendors) => {

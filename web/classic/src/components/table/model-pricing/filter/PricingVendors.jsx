@@ -21,6 +21,28 @@ import React from 'react';
 import SelectableButtonGroup from '../../../common/ui/SelectableButtonGroup';
 import { getLobeHubIcon } from '../../../../helpers';
 
+const BYTEDANCE_VENDOR_LABEL = '\u5b57\u8282\u8df3\u52a8';
+const VENDOR_LABEL_OVERRIDES = {
+  Anthropic: 'Claude',
+  Google: 'Gemini',
+};
+const VENDOR_ORDER = [
+  'OpenAI',
+  'Anthropic',
+  'Claude',
+  'Google',
+  'Gemini',
+  'DeepSeek',
+  '\u667a\u8c31',
+  'unknown',
+];
+const getVendorLabel = (vendor, t) =>
+  t(VENDOR_LABEL_OVERRIDES[vendor] || vendor);
+const getVendorSortIndex = (vendor) => {
+  const index = VENDOR_ORDER.indexOf(vendor);
+  return index === -1 ? VENDOR_ORDER.length : index;
+};
+
 /**
  * 供应商筛选组件
  * @param {string|'all'} filterVendor 当前值
@@ -56,7 +78,10 @@ const PricingVendors = ({
     });
 
     return {
-      vendors: Array.from(vendors).sort(),
+      vendors: Array.from(vendors).sort(
+        (a, b) =>
+          getVendorSortIndex(a) - getVendorSortIndex(b) || a.localeCompare(b),
+      ),
       vendorIcons,
       hasUnknownVendor,
     };
@@ -92,18 +117,18 @@ const PricingVendors = ({
       const icon = getAllVendors.vendorIcons.get(vendor);
       result.push({
         value: vendor,
-        label: vendor,
+        label: getVendorLabel(vendor, t),
         icon: icon ? getLobeHubIcon(icon, 16) : null,
         tagCount: count,
       });
     });
 
-    // 如果系统中存在未知供应商，添加"未知供应商"选项
+    // 如果系统中存在未标明供应商，按字节跳动展示
     if (getAllVendors.hasUnknownVendor) {
       const count = getVendorCount('unknown');
       result.push({
         value: 'unknown',
-        label: t('未知供应商'),
+        label: t(BYTEDANCE_VENDOR_LABEL),
         tagCount: count,
       });
     }

@@ -52,16 +52,27 @@ function renderQuotaType(type, t) {
   }
 }
 
+const BYTEDANCE_VENDOR_LABEL = '\u5b57\u8282\u8df3\u52a8';
+const VENDOR_LABEL_OVERRIDES = {
+  Anthropic: 'Claude',
+  Google: 'Gemini',
+};
+const getVendorDisplayName = (vendorName, t) =>
+  t(
+    vendorName
+      ? VENDOR_LABEL_OVERRIDES[vendorName] || vendorName
+      : BYTEDANCE_VENDOR_LABEL,
+  );
+
 // Render vendor name
 const renderVendor = (vendorName, vendorIcon, t) => {
-  if (!vendorName) return '-';
   return (
     <Tag
       color='white'
       shape='circle'
       prefixIcon={getLobeHubIcon(vendorIcon || 'Layers', 14)}
     >
-      {vendorName}
+      {getVendorDisplayName(vendorName, t)}
     </Tag>
   );
 };

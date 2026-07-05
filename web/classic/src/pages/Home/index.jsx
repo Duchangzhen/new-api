@@ -28,7 +28,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import NoticeModal from '../../components/layout/NoticeModal';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { CLASSIC_PREVIEW_STATUS_FALLBACK } from '../../constants/previewStatus.constant';
-import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
 
 const isRemoteUrl = (value) => /^https?:\/\//i.test(value);
 const toSafeString = (value) =>
@@ -69,31 +69,38 @@ const getModelGroups = (model) =>
   toSafeArray(model?.enable_groups).filter(Boolean);
 const HOME_RATE_CATEGORIES = [
   { id: 'all', zh: '\u5168\u90e8', en: 'All', initials: '\u5168' },
+  { id: 'openai', zh: 'OpenAI', en: 'OpenAI', initials: 'OA' },
   { id: 'claude', zh: 'Claude', en: 'Claude', initials: 'CL' },
-  { id: 'gpt-codex', zh: 'GPT/Codex', en: 'GPT/Codex', initials: 'GPT' },
   { id: 'gemini', zh: 'Gemini', en: 'Gemini', initials: 'GE' },
-  { id: 'china', zh: '\u56fd\u4ea7', en: 'China', initials: '\u56fd' },
+  { id: 'deepseek', zh: 'DeepSeek', en: 'DeepSeek', initials: 'DS' },
+  { id: 'zhipu', zh: '\u667a\u8c31', en: 'Zhipu', initials: '\u667a' },
   {
-    id: 'media',
-    zh: '\u89c6\u9891/\u751f\u56fe',
-    en: 'Video/Image',
-    initials: '\u5f71',
+    id: 'bytedance',
+    zh: '\u5b57\u8282\u8df3\u52a8',
+    en: 'ByteDance',
+    initials: '\u5b57',
   },
-  {
-    id: 'overseas',
-    zh: '\u6d77\u5916/\u5176\u4ed6',
-    en: 'Overseas',
-    initials: '\u6d77',
-  },
-  { id: 'other', zh: '\u5176\u4ed6', en: 'Other', initials: '\u5176' },
 ];
 const getCategoryLabel = (category, isChinese) =>
   isChinese ? category.zh : category.en;
+const BYTEDANCE_VENDOR_KEYWORDS =
+  '\u5b57\u8282\u8df3\u52a8 bytedance byte dance doubao \u8c46\u5305 volcengine \u706b\u5c71\u5f15\u64ce seedance dreamina jimeng \u5373\u68a6';
+const HOME_VENDOR_LABEL_OVERRIDES = {
+  Anthropic: 'Claude',
+  Google: 'Gemini',
+};
+const getHomeVendorDisplayName = (vendorName, isChinese) => {
+  if (!vendorName) {
+    return isChinese ? '\u5b57\u8282\u8df3\u52a8' : 'ByteDance';
+  }
+
+  return HOME_VENDOR_LABEL_OVERRIDES[vendorName] || vendorName;
+};
 const getModelSearchText = (model, groupName = '') =>
   [
     groupName,
     model?.model_name,
-    model?.vendor_name,
+    model?.vendor_name || BYTEDANCE_VENDOR_KEYWORDS,
     model?.description,
     model?.tags,
     ...getModelGroups(model),
@@ -109,31 +116,27 @@ const getCategoryIdsForText = (text) => {
   }
 
   if (/gpt|codex|openai|chatgpt|(^|\W)o[1-9]/.test(text)) {
-    categoryIds.add('gpt-codex');
+    categoryIds.add('openai');
   }
 
   if (/gemini|google/.test(text)) {
     categoryIds.add('gemini');
   }
 
-  if (
-    /deepseek|qwen|\u901a\u4e49|\u667a\u8c31|glm|kimi|moonshot|\u8c46\u5305|doubao|\u6587\u5fc3|ernie|baichuan|minimax|\u6df7\u5143|hunyuan|\u56fd\u4ea7/.test(
-      text,
-    )
-  ) {
-    categoryIds.add('china');
+  if (/deepseek/.test(text)) {
+    categoryIds.add('deepseek');
+  }
+
+  if (/\u667a\u8c31|zhipu|chatglm|glm/.test(text)) {
+    categoryIds.add('zhipu');
   }
 
   if (
-    /video|\u89c6\u9891|image|\u751f\u56fe|draw|dall|midjourney|stable|flux|kling|runway|seedance|dreamina|sora/.test(
+    /\u5b57\u8282\u8df3\u52a8|bytedance|byte dance|doubao|\u8c46\u5305|volcengine|\u706b\u5c71\u5f15\u64ce|seedance|dreamina|jimeng|\u5373\u68a6/.test(
       text,
     )
   ) {
-    categoryIds.add('media');
-  }
-
-  if (/\u6d77\u5916|overseas|dreamina|seedance/.test(text)) {
-    categoryIds.add('overseas');
+    categoryIds.add('bytedance');
   }
 
   return categoryIds;
@@ -148,7 +151,7 @@ const getGroupCategoryIds = (groupName, models) => {
   });
 
   if (categoryIds.size === 0) {
-    categoryIds.add('other');
+    categoryIds.add('bytedance');
   }
 
   return [...categoryIds];
@@ -316,7 +319,12 @@ const Home = () => {
         const vendors = [
           ...new Set(
             groupModels
-              .map((model) => toSafeString(model.vendor_name))
+              .map((model) =>
+                getHomeVendorDisplayName(
+                  toSafeString(model.vendor_name),
+                  isChinese,
+                ),
+              )
               .filter(Boolean),
           ),
         ].slice(0, 3);
@@ -414,7 +422,7 @@ const Home = () => {
       rateCategories.map((category) => ({
         id: 'orbit-' + category.id,
         name: category.label,
-        meta: isChinese ? '\u5206\u7c7b' : 'Category',
+        meta: isChinese ? '\u4f9b\u5e94\u5546' : 'Vendor',
         initials: category.initials,
       })),
     [isChinese, rateCategories],
@@ -427,11 +435,13 @@ const Home = () => {
 
   const effectParticles = useMemo(
     () =>
-      Array.from({ length: 28 }, (_, index) => {
+      Array.from({ length: 46 }, (_, index) => {
         const x = (index * 37 + 12) % 100;
         const y = (index * 53 + 18) % 100;
-        const size = 3 + (index % 4);
-        const duration = 9 + (index % 7);
+        const size = 2 + (index % 5);
+        const duration = 8 + (index % 9);
+        const driftX = (50 - x) * (0.42 + (index % 3) * 0.08);
+        const driftY = (50 - y) * (0.42 + (index % 4) * 0.06);
 
         return {
           id: `effect-particle-${index}`,
@@ -441,11 +451,40 @@ const Home = () => {
             '--particle-size': `${size}px`,
             '--particle-delay': `${index * -0.45}s`,
             '--particle-duration': `${duration}s`,
+            '--particle-drift-x': `${driftX}px`,
+            '--particle-drift-y': `${driftY}px`,
           },
         };
       }),
     [],
   );
+
+  const coreVortexParticles = useMemo(() => {
+    const particleCount = 152;
+
+    return Array.from({ length: particleCount }, (_, index) => {
+      const progress = index / Math.max(1, particleCount - 1);
+      const radius = 16 + Math.pow(progress, 0.72) * 112 + (index % 6) * 1.3;
+      const angle = (progress * 1120 + (index % 9) * 5) % 360;
+      const size = 1.35 + (index % 6) * 0.32;
+      const duration = 3.2 + (index % 7) * 0.2;
+
+      return {
+        id: `core-vortex-particle-${index}`,
+        style: {
+          '--vortex-angle': `${angle}deg`,
+          '--vortex-radius': `${radius}px`,
+          '--vortex-mid-radius': `${Math.max(15, radius * 0.5)}px`,
+          '--vortex-end-radius': `${Math.max(3, radius * 0.06)}px`,
+          '--vortex-size': `${size}px`,
+          '--vortex-tail': `${4.4 + (index % 8) * 0.45}`,
+          '--vortex-tangent': `${92 + (index % 7) * 2}deg`,
+          '--vortex-delay': `${index * -0.045}s`,
+          '--vortex-duration': `${duration}s`,
+        },
+      };
+    });
+  }, []);
 
   const handleEffectPointerMove = (event) => {
     const board = effectBoardRef.current;
@@ -717,42 +756,18 @@ const Home = () => {
               onMouseMove={handleEffectPointerMove}
               onMouseLeave={handleEffectPointerLeave}
             >
-              <div className='classic-home-effect-grid' />
               <div className='classic-home-effect-light classic-home-effect-light-a' />
               <div className='classic-home-effect-light classic-home-effect-light-b' />
               <div className='classic-home-effect-veil' />
-              <div className='classic-home-effect-ribbon classic-home-effect-ribbon-a' />
-              <div className='classic-home-effect-ribbon classic-home-effect-ribbon-b' />
-              <div className='classic-home-effect-thread classic-home-effect-thread-a' />
-              <div className='classic-home-effect-thread classic-home-effect-thread-b' />
-              <div className='classic-home-effect-thread classic-home-effect-thread-c' />
               <div className='classic-home-particle-field' aria-hidden='true'>
                 {effectParticles.map((particle) => (
                   <span key={particle.id} style={particle.style} />
                 ))}
               </div>
-              <div className='classic-home-effect-wave classic-home-effect-wave-a' />
-              <div className='classic-home-effect-wave classic-home-effect-wave-b' />
-              <div className='classic-home-effect-orbit classic-home-effect-orbit-a' />
-              <div className='classic-home-effect-orbit classic-home-effect-orbit-b' />
-              <div className='classic-home-effect-core'>
-                <Sparkles size={30} />
-                <strong>
-                  {pricingState.loading
-                    ? isChinese
-                      ? '\u8bfb\u53d6\u4e2d'
-                      : 'Loading'
-                    : pricingSummary.categoryCount}
-                </strong>
-                <span>{isChinese ? '\u5206\u7c7b' : 'categories'}</span>
-              </div>
-              <div className='classic-home-effect-stat classic-home-effect-stat-a'>
-                <span>{isChinese ? '\u5206\u7ec4' : 'Groups'}</span>
-                <strong>{pricingSummary.groupCount || 0}</strong>
-              </div>
-              <div className='classic-home-effect-stat classic-home-effect-stat-b'>
-                <span>{isChinese ? '\u5206\u7c7b' : 'Categories'}</span>
-                <strong>{pricingSummary.categoryCount}</strong>
+              <div className='classic-home-effect-core' aria-hidden='true'>
+                {coreVortexParticles.map((particle) => (
+                  <span key={particle.id} style={particle.style} />
+                ))}
               </div>
               {effectCategoryNodes.length > 0 ? (
                 <div className='classic-home-effect-node-ring'>
@@ -800,21 +815,21 @@ const Home = () => {
             <div className='classic-home-rate-heading'>
               <h2>
                 {isChinese
-                  ? '\u771f\u5b9e\u5206\u7ec4\u4e0e\u5206\u7c7b'
-                  : 'Live groups and categories'}
+                  ? '\u771f\u5b9e\u5206\u7ec4\u4e0e\u4f9b\u5e94\u5546'
+                  : 'Live groups and vendors'}
               </h2>
               <p>
                 {pricingState.loading
                   ? isChinese
-                    ? '\u6b63\u5728\u8bfb\u53d6\u540e\u53f0\u771f\u5b9e\u5206\u7ec4\u914d\u7f6e\uff0c\u5206\u7c7b\u53ea\u7528\u6765\u7b5b\u9009\u3002'
-                    : 'Loading live group configuration. Categories are used only as filters.'
+                    ? '\u6b63\u5728\u8bfb\u53d6\u540e\u53f0\u771f\u5b9e\u5206\u7ec4\u914d\u7f6e\uff0c\u4f9b\u5e94\u5546\u53ea\u7528\u6765\u7b5b\u9009\u3002'
+                    : 'Loading live group configuration. Vendors are used only as filters.'
                   : pricingSummary.groupCount
                     ? isChinese
                       ? '\u5df2\u8bfb\u53d6 ' +
                         pricingSummary.groupCount +
-                        ' \u4e2a\u5206\u7ec4\uff0c\u4e0b\u65b9\u5361\u7247\u5c55\u793a\u5206\u7ec4\uff0c\u4e0a\u65b9\u6807\u7b7e\u6309\u5206\u7c7b\u7b5b\u9009\u3002'
+                        ' \u4e2a\u5206\u7ec4\uff0c\u4e0b\u65b9\u5361\u7247\u5c55\u793a\u5206\u7ec4\uff0c\u4e0a\u65b9\u6807\u7b7e\u6309\u4f9b\u5e94\u5546\u7b5b\u9009\u3002'
                       : pricingSummary.groupCount +
-                        ' groups loaded. Cards show groups; tabs filter by category.'
+                        ' groups loaded. Cards show groups; tabs filter by vendor.'
                     : isChinese
                       ? '\u5f53\u524d\u6ca1\u6709\u53ef\u516c\u5f00\u5c55\u793a\u7684\u5206\u7ec4\u6570\u636e\u3002'
                       : 'No public group data is available.'}
