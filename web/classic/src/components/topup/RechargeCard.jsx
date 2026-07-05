@@ -44,8 +44,6 @@ import {
   TrendingUp,
   Receipt,
   Sparkles,
-  QrCode,
-  ExternalLink,
 } from 'lucide-react';
 import { IconGift } from '@douyinfe/semi-icons';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
@@ -54,16 +52,6 @@ import { getCurrencyConfig } from '../../helpers/render';
 import SubscriptionPlansCard from './SubscriptionPlansCard';
 
 const { Text } = Typography;
-
-const isImageUrl = (value) => {
-  const url = String(value || '').trim();
-
-  if (!url) return false;
-  if (url.startsWith('data:image/')) return true;
-
-  const path = url.split('?')[0].toLowerCase();
-  return /\.(png|jpe?g|gif|webp|svg)$/.test(path);
-};
 
 const RechargeCard = ({
   t,
@@ -120,7 +108,6 @@ const RechargeCard = ({
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
   const regularPayMethods = payMethods || [];
-  const topUpLinkIsImage = isImageUrl(topUpLink);
 
   useEffect(() => {
     if (initialTabSetRef.current) return;
@@ -591,61 +578,6 @@ const RechargeCard = ({
       </Card>
 
       {/* 兑换码充值 */}
-      {topUpLink && enableRedemption ? (
-        <Card
-          className='!rounded-xl w-full'
-          title={
-            <div className='flex items-center gap-2'>
-              <QrCode size={16} />
-              <Text type='tertiary' strong>
-                {t('扫码购买兑换码')}
-              </Text>
-            </div>
-          }
-        >
-          <div
-            className={
-              topUpLinkIsImage
-                ? 'grid gap-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-center'
-                : 'space-y-3'
-            }
-          >
-            {topUpLinkIsImage ? (
-              <div className='flex justify-center md:justify-start'>
-                <div className='rounded-xl border border-[var(--semi-color-border)] bg-white p-3 shadow-sm'>
-                  <img
-                    src={topUpLink}
-                    alt={t('收款码')}
-                    className='h-[150px] w-[150px] object-contain'
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            <div className='min-w-0 space-y-3'>
-              <div>
-                <Text strong>{t('付款后领取兑换码')}</Text>
-                <div className='mt-1 text-sm leading-6 text-[var(--semi-color-text-2)]'>
-                  {t(
-                    '请扫码付款后把付款截图或订单号发给管理员，管理员确认收款后会发放兑换码。拿到兑换码后在下方输入即可到账。',
-                  )}
-                </div>
-              </div>
-
-              <Button
-                theme='outline'
-                type='tertiary'
-                icon={<ExternalLink size={16} />}
-                onClick={openTopUpLink}
-                className='!rounded-lg'
-              >
-                {topUpLinkIsImage ? t('打开收款码') : t('购买兑换码')}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ) : null}
-
       {enableRedemption ? (
         <Card
           className='!rounded-xl w-full'
