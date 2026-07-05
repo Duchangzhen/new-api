@@ -67,28 +67,91 @@ const formatCompactNumber = (value, digits = 6) => {
 const formatRatioDisplay = (value) => formatCompactNumber(value) + 'x';
 const getModelGroups = (model) =>
   toSafeArray(model?.enable_groups).filter(Boolean);
-const getModelInitials = (name) => {
-  const safeName = toSafeString(name).trim();
+const HOME_RATE_CATEGORIES = [
+  { id: 'all', zh: '\u5168\u90e8', en: 'All', initials: '\u5168' },
+  { id: 'claude', zh: 'Claude', en: 'Claude', initials: 'CL' },
+  { id: 'gpt-codex', zh: 'GPT/Codex', en: 'GPT/Codex', initials: 'GPT' },
+  { id: 'gemini', zh: 'Gemini', en: 'Gemini', initials: 'GE' },
+  { id: 'china', zh: '\u56fd\u4ea7', en: 'China', initials: '\u56fd' },
+  {
+    id: 'media',
+    zh: '\u89c6\u9891/\u751f\u56fe',
+    en: 'Video/Image',
+    initials: '\u5f71',
+  },
+  {
+    id: 'overseas',
+    zh: '\u6d77\u5916/\u5176\u4ed6',
+    en: 'Overseas',
+    initials: '\u6d77',
+  },
+  { id: 'other', zh: '\u5176\u4ed6', en: 'Other', initials: '\u5176' },
+];
+const getCategoryLabel = (category, isChinese) =>
+  isChinese ? category.zh : category.en;
+const getModelSearchText = (model, groupName = '') =>
+  [
+    groupName,
+    model?.model_name,
+    model?.vendor_name,
+    model?.description,
+    model?.tags,
+    ...getModelGroups(model),
+  ]
+    .map(toSafeString)
+    .join(' ')
+    .toLowerCase();
+const getCategoryIdsForText = (text) => {
+  const categoryIds = new Set();
 
-  if (!safeName) {
-    return 'AI';
+  if (/claude|anthropic/.test(text)) {
+    categoryIds.add('claude');
   }
 
-  const cleaned = safeName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
-  return (cleaned || safeName).slice(0, 2).toUpperCase();
+  if (/gpt|codex|openai|chatgpt|(^|\W)o[1-9]/.test(text)) {
+    categoryIds.add('gpt-codex');
+  }
+
+  if (/gemini|google/.test(text)) {
+    categoryIds.add('gemini');
+  }
+
+  if (
+    /deepseek|qwen|\u901a\u4e49|\u667a\u8c31|glm|kimi|moonshot|\u8c46\u5305|doubao|\u6587\u5fc3|ernie|baichuan|minimax|\u6df7\u5143|hunyuan|\u56fd\u4ea7/.test(
+      text,
+    )
+  ) {
+    categoryIds.add('china');
+  }
+
+  if (
+    /video|\u89c6\u9891|image|\u751f\u56fe|draw|dall|midjourney|stable|flux|kling|runway|seedance|dreamina|sora/.test(
+      text,
+    )
+  ) {
+    categoryIds.add('media');
+  }
+
+  if (/\u6d77\u5916|overseas|dreamina|seedance/.test(text)) {
+    categoryIds.add('overseas');
+  }
+
+  return categoryIds;
 };
-const getBestGroupForModel = (model, groupRatio) => {
-  const groups = getModelGroups(model);
+const getGroupCategoryIds = (groupName, models) => {
+  const categoryIds = getCategoryIdsForText(toSafeString(groupName));
 
-  if (groups.length === 0) {
-    return '';
+  models.forEach((model) => {
+    getCategoryIdsForText(getModelSearchText(model, groupName)).forEach((id) =>
+      categoryIds.add(id),
+    );
+  });
+
+  if (categoryIds.size === 0) {
+    categoryIds.add('other');
   }
 
-  return groups.reduce((bestGroup, group) => {
-    const currentRatio = toSafeNumber(groupRatio[group]) ?? 1;
-    const bestRatio = toSafeNumber(groupRatio[bestGroup]) ?? 1;
-    return currentRatio < bestRatio ? group : bestGroup;
-  }, groups[0]);
+  return [...categoryIds];
 };
 const getPricingErrorKind = (error) => {
   const status = error?.response?.status;
@@ -209,30 +272,11 @@ const Home = () => {
   );
 
   const rateCategories = useMemo(() => {
-    const groupNames = Object.keys(pricingState.usableGroup).filter(Boolean);
-
-    return [
-      {
-        id: 'all',
-        label: isChinese ? '\u5168\u90e8\u6a21\u578b' : 'All models',
-        meta: pricingState.models.length
-          ? String(pricingState.models.length)
-          : isChinese
-            ? '\u771f\u5b9e\u63a5\u53e3'
-            : 'live',
-      },
-      ...groupNames.map((group) => ({
-        id: group,
-        label: group,
-        meta: formatRatioDisplay(pricingState.groupRatio[group] ?? 1),
-      })),
-    ];
-  }, [
-    isChinese,
-    pricingState.groupRatio,
-    pricingState.models.length,
-    pricingState.usableGroup,
-  ]);
+    return HOME_RATE_CATEGORIES.map((category) => ({
+      ...category,
+      label: getCategoryLabel(category, isChinese),
+    }));
+  }, [isChinese]);
 
   useEffect(() => {
     if (
@@ -243,105 +287,97 @@ const Home = () => {
     }
   }, [activeRateCategory, rateCategories]);
 
-  const modelRateCards = useMemo(() => {
+  const groupRateCards = useMemo(() => {
     const groupRatio = pricingState.groupRatio;
+    const modelGroups = new Set();
 
-    return pricingState.models
+    pricingState.models.forEach((model) => {
+      getModelGroups(model).forEach((group) => modelGroups.add(group));
+    });
+
+    const groupNames = [
+      ...new Set([
+        ...Object.keys(pricingState.usableGroup).filter(Boolean),
+        ...modelGroups,
+      ]),
+    ].sort((a, b) => a.localeCompare(b));
+
+    return groupNames
+      .map((group) => {
+        const groupModels = pricingState.models.filter((model) =>
+          getModelGroups(model).includes(group),
+        );
+        const categoryIds = getGroupCategoryIds(group, groupModels);
+        const ratioValue = toSafeNumber(groupRatio[group]);
+        const modelNames = groupModels
+          .map((model) => toSafeString(model.model_name))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+        const vendors = [
+          ...new Set(
+            groupModels
+              .map((model) => toSafeString(model.vendor_name))
+              .filter(Boolean),
+          ),
+        ].slice(0, 3);
+        const categoryLabels = categoryIds
+          .map((id) =>
+            getCategoryLabel(
+              HOME_RATE_CATEGORIES.find((category) => category.id === id) ||
+                HOME_RATE_CATEGORIES[HOME_RATE_CATEGORIES.length - 1],
+              isChinese,
+            ),
+          )
+          .slice(0, 4);
+        const description = modelNames.length
+          ? (isChinese ? '\u5305\u542b\u6a21\u578b' : 'Models') +
+            ': ' +
+            modelNames.slice(0, 4).join(' / ') +
+            (modelNames.length > 4 ? ' +' + (modelNames.length - 4) : '')
+          : isChinese
+            ? '\u8fd9\u662f\u540e\u53f0\u5df2\u914d\u7f6e\u7684\u53ef\u7528\u5206\u7ec4\u3002'
+            : 'This is an enabled group from the live pricing configuration.';
+        const metaItems = [
+          (isChinese ? '\u53ef\u7528\u6a21\u578b' : 'Available models') +
+            ' ' +
+            modelNames.length,
+          ratioValue === null
+            ? isChinese
+              ? '\u6309\u540e\u53f0\u914d\u7f6e'
+              : 'Configured in admin'
+            : (isChinese ? '\u5206\u7ec4\u500d\u7387' : 'Group rate') +
+              ' ' +
+              formatRatioDisplay(ratioValue),
+          vendors.length
+            ? (isChinese ? '\u4f9b\u5e94\u5546' : 'Vendors') +
+              ' ' +
+              vendors.join(' / ')
+            : null,
+        ].filter(Boolean);
+
+        return {
+          id: group,
+          name: group,
+          family: isChinese ? '\u5206\u7ec4' : 'Group',
+          rate:
+            ratioValue === null
+              ? isChinese
+                ? '\u5df2\u914d\u7f6e'
+                : 'Enabled'
+              : formatRatioDisplay(ratioValue),
+          tone: ratioValue !== null && ratioValue <= 0.3 ? 'hot' : 'default',
+          description,
+          metaItems,
+          tags: categoryLabels,
+          categoryIds,
+        };
+      })
       .filter((model) => {
         if (activeRateCategory === 'all') {
           return true;
         }
 
-        return getModelGroups(model).includes(activeRateCategory);
-      })
-      .map((model) => {
-        const modelName = toSafeString(model.model_name);
-        const selectedGroup =
-          activeRateCategory === 'all'
-            ? getBestGroupForModel(model, groupRatio)
-            : activeRateCategory;
-        const selectedGroupRatio = selectedGroup
-          ? (toSafeNumber(groupRatio[selectedGroup]) ?? 1)
-          : 1;
-        const modelRatio = toSafeNumber(model.model_ratio);
-        const completionRatio = toSafeNumber(model.completion_ratio);
-        const modelPrice = toSafeNumber(model.model_price);
-        const quotaType = Number(model.quota_type);
-        const isDynamic =
-          model.billing_mode === 'tiered_expr' &&
-          toSafeString(model.billing_expr);
-        const tagList = toSafeString(model.tags)
-          .split(/[,;|]/)
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-        const endpointTags = toSafeArray(model.supported_endpoint_types).slice(
-          0,
-          1,
-        );
-        const billingLabel =
-          quotaType === 1
-            ? isChinese
-              ? '\u6309\u6b21\u8ba1\u8d39'
-              : 'Per use'
-            : isChinese
-              ? '\u6309\u91cf\u8ba1\u8d39'
-              : 'Token billing';
-        const rate = isDynamic
-          ? isChinese
-            ? '\u52a8\u6001\u8ba1\u8d39'
-            : 'Dynamic'
-          : quotaType === 1
-            ? modelPrice === null
-              ? billingLabel
-              : formatCompactNumber(modelPrice) +
-                ' / ' +
-                (isChinese ? '\u6b21' : 'use')
-            : modelRatio === null
-              ? '-'
-              : formatRatioDisplay(modelRatio);
-        const numericToneValue = quotaType === 1 ? modelPrice : modelRatio;
-        const tone =
-          numericToneValue !== null && numericToneValue <= 0.3
-            ? 'hot'
-            : isDynamic
-              ? 'dynamic'
-              : 'default';
-        const groups = getModelGroups(model);
-        const description =
-          toSafeString(model.description) ||
-          (groups.length
-            ? (isChinese ? '\u53ef\u7528\u5206\u7ec4' : 'Groups') +
-              ': ' +
-              groups.join(' / ')
-            : isChinese
-              ? '\u6309\u540e\u53f0\u771f\u5b9e\u4ef7\u683c\u914d\u7f6e\u5c55\u793a\u3002'
-              : 'Loaded from the live pricing configuration.');
-        const metaItems = [
-          selectedGroup
-            ? (isChinese ? '\u5206\u7ec4' : 'Group') +
-              ' ' +
-              selectedGroup +
-              ' ' +
-              formatRatioDisplay(selectedGroupRatio)
-            : null,
-          quotaType === 0 && completionRatio !== null
-            ? (isChinese ? '\u8f93\u51fa' : 'Output') +
-              ' ' +
-              formatRatioDisplay(completionRatio)
-            : null,
-          billingLabel,
-        ].filter(Boolean);
-
-        return {
-          id: model.key || modelName,
-          name: modelName,
-          family: toSafeString(model.vendor_name) || billingLabel,
-          rate,
-          tone,
-          description,
-          metaItems,
-          tags: [...tagList, ...endpointTags].slice(0, 4),
-        };
+        return model.categoryIds.includes(activeRateCategory);
       })
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [
@@ -349,9 +385,10 @@ const Home = () => {
     isChinese,
     pricingState.groupRatio,
     pricingState.models,
+    pricingState.usableGroup,
   ]);
 
-  const visibleModelRateCards = modelRateCards;
+  const visibleGroupRateCards = groupRateCards;
 
   const pricingSummary = useMemo(() => {
     const groupNames = Object.keys(pricingState.usableGroup).filter(Boolean);
@@ -363,6 +400,7 @@ const Home = () => {
     return {
       modelCount: pricingState.models.length,
       groupCount: groupNames.length,
+      categoryCount: HOME_RATE_CATEGORIES.length,
       minRatio,
     };
   }, [
@@ -371,58 +409,16 @@ const Home = () => {
     pricingState.usableGroup,
   ]);
 
-  const effectModelNodes = useMemo(() => {
-    const realNodes = modelRateCards.slice(0, 8).map((model) => ({
-      id: model.id,
-      name: model.name,
-      meta: model.rate,
-      initials: getModelInitials(model.name),
-    }));
-
-    if (realNodes.length > 0) {
-      return realNodes;
-    }
-
-    const pendingMeta = pricingState.loading
-      ? isChinese
-        ? '\u8bfb\u53d6\u4e2d'
-        : 'Loading'
-      : isChinese
-        ? '\u7b49\u5f85\u516c\u5f00'
-        : 'Waiting';
-    const priceMeta =
-      pricingSummary.minRatio === null
-        ? pendingMeta
-        : formatRatioDisplay(pricingSummary.minRatio);
-    const fallbackNodes = [
-      { id: 'orbit-gpt', name: 'GPT', meta: pendingMeta, initials: 'GPT' },
-      {
-        id: 'orbit-claude',
-        name: 'Claude',
-        meta: pendingMeta,
-        initials: 'CL',
-      },
-      {
-        id: 'orbit-gemini',
-        name: 'Gemini',
-        meta: pendingMeta,
-        initials: 'GE',
-      },
-      {
-        id: 'orbit-price',
-        name: isChinese ? '\u4ef7\u683c' : 'Price',
-        meta: priceMeta,
-        initials: isChinese ? '\u4ef7' : '$',
-      },
-    ];
-
-    return fallbackNodes;
-  }, [
-    isChinese,
-    modelRateCards,
-    pricingState.loading,
-    pricingSummary.minRatio,
-  ]);
+  const effectCategoryNodes = useMemo(
+    () =>
+      rateCategories.map((category) => ({
+        id: 'orbit-' + category.id,
+        name: category.label,
+        meta: isChinese ? '\u5206\u7c7b' : 'Category',
+        initials: category.initials,
+      })),
+    [isChinese, rateCategories],
+  );
 
   const pricingSkeletonCards = useMemo(
     () => Array.from({ length: 6 }, (_, index) => 'pricing-skeleton-' + index),
@@ -746,70 +742,31 @@ const Home = () => {
                     ? isChinese
                       ? '\u8bfb\u53d6\u4e2d'
                       : 'Loading'
-                    : pricingSummary.modelCount || 0}
+                    : pricingSummary.categoryCount}
                 </strong>
-                <span>
-                  {pricingSummary.modelCount
-                    ? isChinese
-                      ? '\u771f\u5b9e\u6a21\u578b'
-                      : 'real models'
-                    : isChinese
-                      ? '\u7b49\u5f85\u516c\u5f00'
-                      : 'waiting'}
-                </span>
+                <span>{isChinese ? '\u5206\u7c7b' : 'categories'}</span>
               </div>
               <div className='classic-home-effect-stat classic-home-effect-stat-a'>
                 <span>{isChinese ? '\u5206\u7ec4' : 'Groups'}</span>
                 <strong>{pricingSummary.groupCount || 0}</strong>
               </div>
               <div className='classic-home-effect-stat classic-home-effect-stat-b'>
-                <span>
-                  {isChinese ? '\u6700\u4f4e\u5206\u7ec4' : 'Lowest group'}
-                </span>
-                <strong>
-                  {pricingSummary.minRatio === null
-                    ? isChinese
-                      ? '\u5f85\u516c\u5f00'
-                      : 'Private'
-                    : formatRatioDisplay(pricingSummary.minRatio)}
-                </strong>
+                <span>{isChinese ? '\u5206\u7c7b' : 'Categories'}</span>
+                <strong>{pricingSummary.categoryCount}</strong>
               </div>
-              {effectModelNodes.length > 0 ? (
+              {effectCategoryNodes.length > 0 ? (
                 <div className='classic-home-effect-node-ring'>
-                  {effectModelNodes.map((item, index) => {
-                    const desktopPositions = [
-                      [-318, -112],
-                      [96, -188],
-                      [282, 18],
-                      [-118, 178],
-                      [-438, 88],
-                      [430, -126],
-                      [36, 224],
-                      [-468, -158],
-                    ];
-                    const mobilePositions = [
-                      [-92, -94],
-                      [78, -82],
-                      [92, 70],
-                      [-74, 100],
-                      [0, -132],
-                      [0, 132],
-                    ];
-                    const nodePosition = (
-                      isMobile ? mobilePositions : desktopPositions
-                    )[
-                      index %
-                        (isMobile ? mobilePositions : desktopPositions).length
-                    ];
+                  {effectCategoryNodes.map((item, index) => {
+                    const nodeCount = effectCategoryNodes.length || 1;
+                    const nodeAngle = (360 / nodeCount) * index - 90;
 
                     return (
                       <div
                         key={item.id}
                         className='classic-home-effect-node'
                         style={{
-                          '--x': nodePosition[0] + 'px',
-                          '--y': nodePosition[1] + 'px',
-                          '--delay': index * 0.08 + 's',
+                          '--angle': nodeAngle + 'deg',
+                          '--orbit-radius': isMobile ? '92px' : '286px',
                         }}
                       >
                         <div className='classic-home-effect-node-card'>
@@ -843,24 +800,24 @@ const Home = () => {
             <div className='classic-home-rate-heading'>
               <h2>
                 {isChinese
-                  ? '\u771f\u5b9e\u6a21\u578b\u4e0e\u500d\u7387'
-                  : 'Live models and rates'}
+                  ? '\u771f\u5b9e\u5206\u7ec4\u4e0e\u5206\u7c7b'
+                  : 'Live groups and categories'}
               </h2>
               <p>
                 {pricingState.loading
                   ? isChinese
-                    ? '\u6b63\u5728\u8bfb\u53d6\u4ef7\u683c\u9875\u771f\u5b9e\u914d\u7f6e\uff0c\u4e0d\u5199\u6b7b\u4efb\u4f55\u6a21\u578b\u3002'
-                    : 'Loading the live pricing config without hardcoded models.'
-                  : pricingState.models.length
+                    ? '\u6b63\u5728\u8bfb\u53d6\u540e\u53f0\u771f\u5b9e\u5206\u7ec4\u914d\u7f6e\uff0c\u5206\u7c7b\u53ea\u7528\u6765\u7b5b\u9009\u3002'
+                    : 'Loading live group configuration. Categories are used only as filters.'
+                  : pricingSummary.groupCount
                     ? isChinese
                       ? '\u5df2\u8bfb\u53d6 ' +
-                        pricingState.models.length +
-                        ' \u4e2a\u6a21\u578b\uff0c\u500d\u7387\u5168\u90e8\u6765\u81ea /api/pricing\u3002'
-                      : pricingState.models.length +
-                        ' models loaded directly from /api/pricing.'
+                        pricingSummary.groupCount +
+                        ' \u4e2a\u5206\u7ec4\uff0c\u4e0b\u65b9\u5361\u7247\u5c55\u793a\u5206\u7ec4\uff0c\u4e0a\u65b9\u6807\u7b7e\u6309\u5206\u7c7b\u7b5b\u9009\u3002'
+                      : pricingSummary.groupCount +
+                        ' groups loaded. Cards show groups; tabs filter by category.'
                     : isChinese
-                      ? '\u5f53\u524d\u6ca1\u6709\u53ef\u516c\u5f00\u5c55\u793a\u7684\u500d\u7387\u6570\u636e\u3002\u540e\u53f0\u5f00\u542f\u4ef7\u683c\u9875\u516c\u5f00\u6216\u767b\u5f55\u540e\uff0c\u4f1a\u81ea\u52a8\u5c55\u793a\u771f\u5b9e\u6a21\u578b\u3002'
-                      : 'No public pricing data is available. Open pricing access or sign in to show live models.'}
+                      ? '\u5f53\u524d\u6ca1\u6709\u53ef\u516c\u5f00\u5c55\u793a\u7684\u5206\u7ec4\u6570\u636e\u3002'
+                      : 'No public group data is available.'}
               </p>
             </div>
 
@@ -879,7 +836,7 @@ const Home = () => {
                     onClick={() => setActiveRateCategory(category.id)}
                   >
                     <span>{category.label}</span>
-                    <em>{category.meta}</em>
+                    {category.meta ? <em>{category.meta}</em> : null}
                   </button>
                 ))}
               </div>
@@ -899,9 +856,9 @@ const Home = () => {
                   </article>
                 ))}
               </div>
-            ) : visibleModelRateCards.length > 0 ? (
+            ) : visibleGroupRateCards.length > 0 ? (
               <div className='classic-home-model-rate-grid'>
-                {visibleModelRateCards.map((item, index) => (
+                {visibleGroupRateCards.map((item, index) => (
                   <article
                     key={item.id}
                     className={
@@ -944,17 +901,17 @@ const Home = () => {
                         ? '\u4ef7\u683c\u9875\u5f53\u524d\u9700\u8981\u767b\u5f55'
                         : 'Pricing currently requires sign-in'
                       : isChinese
-                        ? '\u6682\u65e0\u516c\u5f00\u500d\u7387\u6570\u636e'
-                        : 'No public rate data'}
+                        ? '\u6682\u65e0\u516c\u5f00\u5206\u7ec4\u6570\u636e'
+                        : 'No public group data'}
                   </strong>
                   <p>
                     {pricingState.error === 'auth'
                       ? isChinese
-                        ? '\u8fd9\u662f\u540e\u53f0\u771f\u5b9e\u6743\u9650\u8bbe\u7f6e\u5bfc\u81f4\u7684\uff0c\u4e0d\u4f1a\u518d\u7528\u5047\u6a21\u578b\u5360\u4f4d\u3002\u767b\u5f55\u540e\u6216\u5c06\u4ef7\u683c\u9875\u8bbe\u4e3a\u516c\u5f00\u5373\u53ef\u5c55\u793a\u771f\u5b9e\u500d\u7387\u3002'
-                        : 'This follows the real permission setting. Sign in or make pricing public to show live rates.'
+                        ? '\u8fd9\u662f\u540e\u53f0\u771f\u5b9e\u6743\u9650\u8bbe\u7f6e\u5bfc\u81f4\u7684\uff0c\u4e0d\u4f1a\u518d\u7528\u5047\u5206\u7ec4\u5360\u4f4d\u3002'
+                        : 'This follows the real permission setting and will not show fake groups.'
                       : isChinese
-                        ? '\u63a5\u53e3\u6ca1\u6709\u8fd4\u56de\u6a21\u578b\u65f6\uff0c\u8fd9\u91cc\u4fdd\u6301\u7a7a\u6001\uff0c\u907f\u514d\u5c55\u793a\u4f60\u6ca1\u6709\u914d\u7f6e\u7684\u5185\u5bb9\u3002'
-                        : 'When the API returns no models, this stays empty instead of showing fake content.'}
+                        ? '\u63a5\u53e3\u6ca1\u6709\u8fd4\u56de\u5206\u7ec4\u65f6\uff0c\u8fd9\u91cc\u4fdd\u6301\u7a7a\u6001\u3002'
+                        : 'When the API returns no groups, this stays empty.'}
                   </p>
                 </div>
                 <Link to='/pricing'>

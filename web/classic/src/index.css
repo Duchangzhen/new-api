@@ -1478,6 +1478,19 @@ body {
   }
 }
 
+@keyframes classic-home-category-orbit {
+  0% {
+    transform: rotate(var(--angle, 0deg)) translateX(var(--orbit-radius, 340px))
+      rotate(calc(var(--angle, 0deg) * -1));
+  }
+
+  100% {
+    transform: rotate(calc(var(--angle, 0deg) + 360deg))
+      translateX(var(--orbit-radius, 340px))
+      rotate(calc((var(--angle, 0deg) + 360deg) * -1));
+  }
+}
+
 @keyframes classic-home-node-breathe {
   0%,
   100% {
@@ -1978,11 +1991,12 @@ body {
 
 .classic-home-effect-node {
   position: absolute;
-  top: calc(50% + var(--y, 0%));
-  left: calc(50% + var(--x, 0%));
-  transform: translate(-50%, -50%);
-  animation: classic-home-node-breathe 6.4s ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  animation: classic-home-category-orbit 42s linear infinite;
 }
 
 .classic-home-effect-node::before {
@@ -2030,6 +2044,7 @@ body {
     border-color 0.22s ease,
     box-shadow 0.22s ease,
     transform 0.22s ease;
+  transform: translate(-50%, -50%);
 }
 
 .classic-home-effect-node-card:hover {
@@ -2038,7 +2053,7 @@ body {
     0 28px 70px rgba(15, 23, 42, 0.095),
     0 0 0 6px rgba(20, 184, 166, 0.055),
     inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  transform: translateY(-4px);
+  transform: translate(-50%, calc(-50% - 4px));
 }
 
 .classic-home-effect-node-card > span {
@@ -2946,31 +2961,27 @@ html.dark .classic-home-faq .semi-collapse-header {
     display: none;
   }
 
-  .classic-home-effect-node:nth-child(n + 5) {
-    display: none;
-  }
-
   .classic-home-effect-node::before {
-    width: 110px;
+    width: 96px;
   }
 
   .classic-home-effect-node-card {
-    width: 126px;
+    width: 112px;
     min-width: 0;
     gap: 8px;
     border-radius: 999px;
-    padding: 8px;
+    padding: 7px;
   }
 
   .classic-home-effect-node-card > span {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 999px;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
 
   .classic-home-effect-node-card strong {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
   }
 
   .classic-home-effect-node-card small {
@@ -2999,6 +3010,11 @@ html.dark .classic-home-faq .semi-collapse-header {
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .classic-home-rate-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .classic-home-rate-tab {
