@@ -30,6 +30,7 @@ import {
   buildRegistrationResult,
   isPasskeySupported,
   setUserData,
+  ensureSystemAnnouncements,
 } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { Modal } from '@douyinfe/semi-ui';
@@ -144,11 +145,12 @@ const PersonalSetting = () => {
         const res = await API.get('/api/status');
         const { success, data } = res.data;
         if (success && data) {
-          setStatus(data);
-          setStatusData(data);
-          if (data.turnstile_check) {
+          const statusData = ensureSystemAnnouncements(data);
+          setStatus(statusData);
+          setStatusData(statusData);
+          if (statusData.turnstile_check) {
             setTurnstileEnabled(true);
-            setTurnstileSiteKey(data.turnstile_site_key);
+            setTurnstileSiteKey(statusData.turnstile_site_key);
           } else {
             setTurnstileEnabled(false);
             setTurnstileSiteKey('');

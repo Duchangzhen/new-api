@@ -34,6 +34,7 @@ import {
   getSystemName,
   showError,
   setStatusData,
+  ensureSystemAnnouncements,
 } from '../../helpers';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -126,9 +127,10 @@ const PageLayout = () => {
       const res = await API.get('/api/status');
       const { success, data } = res.data;
       if (success) {
-        statusDispatch({ type: 'set', payload: data });
-        setStatusData(data);
-        applyBrowserBranding(data.system_name, data.logo);
+        const statusData = ensureSystemAnnouncements(data);
+        statusDispatch({ type: 'set', payload: statusData });
+        setStatusData(statusData);
+        applyBrowserBranding(statusData.system_name, statusData.logo);
       } else {
         showError('Unable to connect to server');
       }
