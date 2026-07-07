@@ -46,14 +46,7 @@ import {
   IconEyeOpened,
   IconEyeClosed,
 } from '@douyinfe/semi-icons';
-
-const ALLOWED_TOKEN_IMPORT_CHAT_NAMES = new Set(['CC Switch', 'Codex安装助手']);
-
-const normalizeTokenImportChatName = (name) => name.replace(/\s+/g, '');
-
-const isAllowedTokenImportChat = (name) =>
-  ALLOWED_TOKEN_IMPORT_CHAT_NAMES.has(name) ||
-  normalizeTokenImportChatName(name) === 'Codex安装助手';
+import { resolveTokenImportChats } from './tokenImportChats';
 
 // progress color helper
 const getProgressColor = (pct) => {
@@ -371,18 +364,16 @@ const renderOperations = (
   try {
     const raw = localStorage.getItem('chats');
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      for (let i = 0; i < parsed.length; i++) {
-        const item = parsed[i];
-        const name = Object.keys(item)[0];
-        if (!name) continue;
-        if (!isAllowedTokenImportChat(name)) continue;
+    const importChats = resolveTokenImportChats(parsed);
+    if (Array.isArray(importChats)) {
+      for (let i = 0; i < importChats.length; i++) {
+        const item = importChats[i];
         chatsArray.push({
           node: 'item',
           key: i,
-          name,
-          value: item[name],
-          onClick: () => onOpenLink(name, item[name], record),
+          name: item.name,
+          value: item.url,
+          onClick: () => onOpenLink(item.name, item.url, record),
         });
       }
     }
