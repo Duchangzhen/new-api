@@ -31,12 +31,11 @@ export const CLASSIC_PREVIEW_STATUS_FALLBACK = {
   enable_task: true,
   enable_data_export: true,
   chats: [
-    { 'Cherry Studio': 'cherrystudio://providers/api-keys?v=1&data={cherryConfig}' },
-    { AionUI: 'aionui://provider/add?v=1&data={aionuiConfig}' },
-    { 'CC Switch': 'ccswitch://v1/import?resource=provider&app=codex&name=%E6%9F%92%20Codex&endpoint={address}%2Fv1&apiKey={key}&model=deepseek-v4-flash&homepage={address}&enabled=true' },
-    { DeepChat: 'deepchat://provider/install?v=1&data={deepchatConfig}' },
-    { LobeChat: 'https://chat-preview.lobehub.com/?settings={"keyVaults":{"openai":{"apiKey":"{key}","baseURL":"{address}/v1"}}}' },
-    { OpenCat: 'opencat://team/join?domain={address}&token={key}' },
+    { 'CC Switch': 'ccswitch' },
+    {
+      Codex安装助手:
+        'codex-assistant://import-provider?provider=ACAIM&homepage={address}&endpoint={address}%2Fv1&apiKey={key}&model=gpt-5.5&protocol=responses&apply=1',
+    },
   ],
   data_export_default_time: 'hour',
   default_collapse_sidebar: false,

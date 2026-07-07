@@ -47,6 +47,14 @@ import {
   IconEyeClosed,
 } from '@douyinfe/semi-icons';
 
+const ALLOWED_TOKEN_IMPORT_CHAT_NAMES = new Set(['CC Switch', 'Codex安装助手']);
+
+const normalizeTokenImportChatName = (name) => name.replace(/\s+/g, '');
+
+const isAllowedTokenImportChat = (name) =>
+  ALLOWED_TOKEN_IMPORT_CHAT_NAMES.has(name) ||
+  normalizeTokenImportChatName(name) === 'Codex安装助手';
+
 // progress color helper
 const getProgressColor = (pct) => {
   if (pct === 100) return 'var(--semi-color-success)';
@@ -368,6 +376,7 @@ const renderOperations = (
         const item = parsed[i];
         const name = Object.keys(item)[0];
         if (!name) continue;
+        if (!isAllowedTokenImportChat(name)) continue;
         chatsArray.push({
           node: 'item',
           key: i,

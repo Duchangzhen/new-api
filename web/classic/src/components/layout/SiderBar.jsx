@@ -254,6 +254,7 @@ const SiderBar = ({ onNavigate = () => {} }) => {
               if (
                 link.startsWith('fluent') ||
                 link.startsWith('ccswitch') ||
+                link.startsWith('codex-assistant') ||
                 link.startsWith('deepchat')
               ) {
                 shouldSkip = true;
