@@ -29,6 +29,14 @@ import NoticeModal from '../../components/layout/NoticeModal';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { CLASSIC_PREVIEW_STATUS_FALLBACK } from '../../constants/previewStatus.constant';
 import { ArrowRight, BookOpen } from 'lucide-react';
+import {
+  Claude,
+  DeepSeek,
+  Doubao,
+  Gemini,
+  OpenAI,
+  Zhipu,
+} from '@lobehub/icons';
 
 const isRemoteUrl = (value) => /^https?:\/\//i.test(value);
 const toSafeString = (value) =>
@@ -80,18 +88,62 @@ const compareGroupRateCards = (a, b) => {
 const getModelGroups = (model) =>
   toSafeArray(model?.enable_groups).filter(Boolean);
 const HOME_RATE_CATEGORIES = [
-  { id: 'all', zh: '\u5168\u90e8', en: 'All', initials: '\u5168' },
-  { id: 'openai', zh: 'OpenAI', en: 'OpenAI', initials: 'OA' },
-  { id: 'claude', zh: 'Claude', en: 'Claude', initials: 'CL' },
-  { id: 'gemini', zh: 'Gemini', en: 'Gemini', initials: 'GE' },
-  { id: 'deepseek', zh: 'DeepSeek', en: 'DeepSeek', initials: 'DS' },
-  { id: 'zhipu', zh: '\u667a\u8c31', en: 'Zhipu', initials: '\u667a' },
+  {
+    id: 'all',
+    zh: '\u5168\u90e8',
+    en: 'All',
+    initials: '\u5168',
+  },
+  {
+    id: 'openai',
+    zh: 'OpenAI',
+    en: 'OpenAI',
+    initials: 'OA',
+    Logo: OpenAI,
+  },
+  {
+    id: 'claude',
+    zh: 'Claude',
+    en: 'Claude',
+    initials: 'CL',
+    Logo: Claude.Color,
+  },
+  {
+    id: 'gemini',
+    zh: 'Gemini',
+    en: 'Gemini',
+    initials: 'GE',
+    Logo: Gemini.Color,
+  },
+  {
+    id: 'deepseek',
+    zh: 'DeepSeek',
+    en: 'DeepSeek',
+    initials: 'DS',
+    Logo: DeepSeek.Color,
+  },
+  {
+    id: 'zhipu',
+    zh: '\u667a\u8c31',
+    en: 'Zhipu',
+    initials: '\u667a',
+    Logo: Zhipu.Color,
+  },
   {
     id: 'bytedance',
     zh: '\u5b57\u8282\u8df3\u52a8',
     en: 'ByteDance',
     initials: '\u5b57',
+    Logo: Doubao.Color,
   },
+];
+const HOME_EFFECT_NODE_LAYOUT = [
+  { x: 18, y: 52, mobileX: 18, mobileY: 34, line: 0, width: 0 },
+  { x: 32, y: 38, mobileX: 50, mobileY: 24, line: 0, width: 0 },
+  { x: 46, y: 59, mobileX: 82, mobileY: 34, line: 0, width: 0 },
+  { x: 60, y: 39, mobileX: 18, mobileY: 66, line: 0, width: 0 },
+  { x: 74, y: 60, mobileX: 50, mobileY: 76, line: 0, width: 0 },
+  { x: 87, y: 48, mobileX: 82, mobileY: 66, line: 0, width: 0 },
 ];
 const getCategoryLabel = (category, isChinese) =>
   isChinese ? category.zh : category.en;
@@ -432,12 +484,15 @@ const Home = () => {
 
   const effectCategoryNodes = useMemo(
     () =>
-      rateCategories.map((category) => ({
-        id: 'orbit-' + category.id,
-        name: category.label,
-        meta: isChinese ? '\u4f9b\u5e94\u5546' : 'Vendor',
-        initials: category.initials,
-      })),
+      rateCategories
+        .filter((category) => category.id !== 'all')
+        .map((category) => ({
+          id: 'orbit-' + category.id,
+          name: category.label,
+          meta: isChinese ? '\u4f9b\u5e94\u5546' : 'Vendor',
+          initials: category.initials,
+          Logo: category.Logo,
+        })),
     [isChinese, rateCategories],
   );
 
@@ -471,33 +526,6 @@ const Home = () => {
       }),
     [],
   );
-
-  const coreVortexParticles = useMemo(() => {
-    const particleCount = 152;
-
-    return Array.from({ length: particleCount }, (_, index) => {
-      const progress = index / Math.max(1, particleCount - 1);
-      const radius = 16 + Math.pow(progress, 0.72) * 112 + (index % 6) * 1.3;
-      const angle = (progress * 1120 + (index % 9) * 5) % 360;
-      const size = 1.35 + (index % 6) * 0.32;
-      const duration = 3.2 + (index % 7) * 0.2;
-
-      return {
-        id: `core-vortex-particle-${index}`,
-        style: {
-          '--vortex-angle': `${angle}deg`,
-          '--vortex-radius': `${radius}px`,
-          '--vortex-mid-radius': `${Math.max(15, radius * 0.5)}px`,
-          '--vortex-end-radius': `${Math.max(3, radius * 0.06)}px`,
-          '--vortex-size': `${size}px`,
-          '--vortex-tail': `${4.4 + (index % 8) * 0.45}`,
-          '--vortex-tangent': `${92 + (index % 7) * 2}deg`,
-          '--vortex-delay': `${index * -0.045}s`,
-          '--vortex-duration': `${duration}s`,
-        },
-      };
-    });
-  }, []);
 
   const handleEffectPointerMove = (event) => {
     const board = effectBoardRef.current;
@@ -761,7 +789,7 @@ const Home = () => {
             </div>
           </section>
 
-          <section className='classic-home-effect-section mx-auto w-full max-w-[1500px] px-3 py-12 md:px-6 md:py-[72px]'>
+          <section className='classic-home-effect-section mx-auto w-full max-w-[1500px] px-3 py-4 md:px-6 md:py-6'>
             <div
               ref={effectBoardRef}
               className='classic-home-effect-board'
@@ -769,44 +797,70 @@ const Home = () => {
               onMouseMove={handleEffectPointerMove}
               onMouseLeave={handleEffectPointerLeave}
             >
-              <div className='classic-home-effect-light classic-home-effect-light-a' />
-              <div className='classic-home-effect-light classic-home-effect-light-b' />
-              <div className='classic-home-effect-veil' />
-              <div className='classic-home-particle-field' aria-hidden='true'>
-                {effectParticles.map((particle) => (
-                  <span key={particle.id} style={particle.style} />
-                ))}
-              </div>
-              <div className='classic-home-effect-core' aria-hidden='true'>
-                {coreVortexParticles.map((particle) => (
-                  <span key={particle.id} style={particle.style} />
-                ))}
-              </div>
               {effectCategoryNodes.length > 0 ? (
-                <div className='classic-home-effect-node-ring'>
-                  {effectCategoryNodes.map((item, index) => {
-                    const nodeCount = effectCategoryNodes.length || 1;
-                    const nodeAngle = (360 / nodeCount) * index - 90;
+                <div className='classic-home-product-map'>
+                  <div
+                    className='classic-home-product-map-grid'
+                    aria-hidden='true'
+                  />
+                  <div
+                    className='classic-home-product-map-glow'
+                    aria-hidden='true'
+                  />
+                  <div
+                    className='classic-home-particle-field'
+                    aria-hidden='true'
+                  >
+                    {effectParticles.map((particle) => (
+                      <span key={particle.id} style={particle.style} />
+                    ))}
+                  </div>
+                  <div
+                    className='classic-home-product-map-rails'
+                    aria-hidden='true'
+                  >
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className='classic-home-effect-node-ring'>
+                    {effectCategoryNodes.map((item, index) => {
+                      const Logo = item.Logo;
+                      const layout =
+                        HOME_EFFECT_NODE_LAYOUT[
+                          index % HOME_EFFECT_NODE_LAYOUT.length
+                        ];
 
-                    return (
-                      <div
-                        key={item.id}
-                        className='classic-home-effect-node'
-                        style={{
-                          '--angle': nodeAngle + 'deg',
-                          '--orbit-radius': isMobile ? '92px' : '286px',
-                        }}
-                      >
-                        <div className='classic-home-effect-node-card'>
-                          <span>{item.initials}</span>
-                          <div>
-                            <strong>{item.name}</strong>
-                            <small>{item.meta}</small>
+                      return (
+                        <div
+                          key={item.id}
+                          className='classic-home-effect-node'
+                          style={{
+                            '--node-x': `${isMobile ? layout.mobileX : layout.x}%`,
+                            '--node-y': `${isMobile ? layout.mobileY : layout.y}%`,
+                            '--line-angle': `${layout.line}deg`,
+                            '--line-width': `${isMobile ? 72 : layout.width}px`,
+                            '--node-delay': index * -0.32 + 's',
+                          }}
+                        >
+                          <div className='classic-home-effect-node-card'>
+                            <div className='classic-home-effect-node-surface'>
+                              <span
+                                className='classic-home-effect-node-logo'
+                                aria-hidden='true'
+                              >
+                                {Logo ? <Logo size={22} /> : item.initials}
+                              </span>
+                              <div>
+                                <strong>{item.name}</strong>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className='classic-home-effect-empty-state'>
