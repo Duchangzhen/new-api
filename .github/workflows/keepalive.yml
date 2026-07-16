@@ -23,7 +23,9 @@ jobs:
       - name: Ping public endpoints
         run: |
           stamp="$(date +%s)"
-          curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 5 \
-            "https://acaim.cn/api/status?keepalive=github-actions-${stamp}" || \
-          curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 5 \
-            "https://acaim.cn/?keepalive=github-actions-${stamp}"
+          for url in \
+            "https://acaim.cn/api/status?keepalive=github-actions-${stamp}" \
+            "https://acaim.onrender.com/health?keepalive=github-actions-${stamp}"; do
+            curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 5 "$url"
+            echo
+          done
